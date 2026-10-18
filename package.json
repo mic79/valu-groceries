@@ -1,0 +1,11 @@
+{
+  "name": "valu-groceries",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Valu Groceries - shopping lists on your own Google Sheet (static PWA, no build step)",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "test": "node --test \"tests/*.test.mjs\""
+  }
+}

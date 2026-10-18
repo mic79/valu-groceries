@@ -1,0 +1,764 @@
+/* Valu Groceries - styles on top of the shared Valu stylesheet (styles.css). */
+
+/* ── Landing: product name under the Valu wordmark ─────────────────────────── */
+.vg-landing-product {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .32em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin: 0;
+  padding-left: .32em;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .65s ease, transform .65s ease;
+}
+.vg-landing-product.valu-landing-tagline--visible { opacity: 1; transform: translateY(0); }
+
+/* ── Shopping page ─────────────────────────────────────────────────────────── */
+.gl-page { padding: 0; position: relative; min-height: 100%; display: flex; flex-direction: column; }
+/* The list is a sub-page (like Expenses in Valu Finance): fill the scroller so the bars stick to the bottom. */
+.subpage-scroll > .gl-page { flex: 1 0 auto; min-height: 0; }
+
+/* Home dashboard: shopping list glance */
+.gl-home { padding-bottom: 8px; }
+.gl-home-list-body { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.gl-home-list-icon { color: var(--color-primary); font-size: 26px; }
+.gl-home-list-main { flex: 1; min-width: 0; }
+.gl-home-list-title { font-weight: 700; font-size: 15px; }
+.gl-home-list-stores { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 2px; font-size: 12px; color: var(--color-text-secondary); }
+.gl-main-area { flex: 1; padding-bottom: 8px; }
+
+.gl-store-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.gl-store-tabs::-webkit-scrollbar { display: none; }
+.gl-store-tab {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.gl-store-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.gl-store-tab-count {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  text-align: center;
+}
+.gl-store-tab.active .gl-store-tab-count { background: rgba(255,255,255,.25); color: #fff; }
+.gl-store-tab--add { border-style: dashed; color: var(--color-primary); }
+.gl-store-tab--add .material-icons { font-size: 16px; }
+
+.gl-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 20px 4px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.gl-summary-main { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.gl-summary-check { width: 36px; height: 36px; margin-left: -8px; }
+.gl-summary-check .gl-check-circle { width: 20px; height: 20px; }
+.gl-summary-check .material-icons { font-size: 14px; }
+.gl-check:disabled { opacity: .4; cursor: default; }
+.gl-summary-total { font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.gl-summary-actions { display: flex; gap: 2px; }
+.gl-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.gl-icon-btn .material-icons { font-size: 20px; }
+.gl-icon-btn:active, .gl-icon-btn.active { background: var(--color-primary-light); color: var(--color-primary); }
+
+.gl-list { padding: 4px 16px 0; }
+.gl-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 8px 12px 8px 8px;
+  margin-bottom: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease;
+}
+.gl-item:active { box-shadow: var(--shadow-md); }
+.gl-item--done { opacity: .62; }
+.gl-item--done .gl-item-title { text-decoration: line-through; text-decoration-color: var(--color-text-hint); }
+.gl-item--leaving { opacity: 0; transform: translateX(24px); }
+.gl-item--dragging {
+  position: relative;
+  z-index: 5;
+  transition: none;
+  box-shadow: var(--shadow-lg);
+  opacity: .96;
+}
+.gl-item--selected { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+
+.gl-check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.gl-check-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  color: transparent;
+  transition: background .15s, color .15s;
+}
+.gl-check-circle .material-icons { font-size: 16px; }
+.gl-check:active .gl-check-circle { background: var(--color-primary-light); }
+.gl-check.checked .gl-check-circle { background: var(--color-primary); color: #fff; }
+.gl-check--square .gl-check-circle { border-radius: 7px; }
+
+.gl-item-main { flex: 1; min-width: 0; }
+.gl-item-title { font-size: 1rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-item-sub {
+  font-size: .8125rem;
+  color: var(--color-text-secondary);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gl-item-qty {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+.gl-item-price { flex-shrink: 0; font-size: .9375rem; font-variant-numeric: tabular-nums; color: var(--color-text); }
+.gl-item-price--none { color: var(--color-text-hint); }
+.gl-drag-handle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  color: var(--color-text-hint);
+  touch-action: none;
+  cursor: grab;
+}
+
+.gl-done-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 12px 0 8px;
+  padding: 6px 4px;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.gl-done-head .material-icons { font-size: 20px; transition: transform .2s; }
+.gl-done-head.open .material-icons { transform: rotate(180deg); }
+.gl-done-head-total { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* Quick add bar: sticks to the bottom of the scrolling page, directly above the tab bar. */
+.gl-quick {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  padding: 12px 16px 12px;
+  background: linear-gradient(rgba(252,251,250,0) 0%, var(--color-background) 28%);
+}
+html[data-theme="dark"] .gl-quick { background: linear-gradient(rgba(33,31,29,0) 0%, var(--color-background) 28%); }
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .gl-quick { background: linear-gradient(rgba(33,31,29,0) 0%, var(--color-background) 28%); }
+}
+.gl-quick-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 18px;
+  border-radius: 28px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  border: 1.5px solid transparent;
+  transition: border-color .15s;
+}
+.gl-quick-row:focus-within { border-color: var(--color-primary); }
+.gl-quick-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--color-text);
+  padding: 12px 0;
+}
+.gl-quick-input::placeholder { color: var(--color-text-hint); }
+.gl-quick-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.gl-quick-btn--go { background: var(--color-primary); color: #fff; }
+.gl-quick-btn--go:disabled { background: var(--color-border); color: var(--color-text-hint); }
+.gl-suggest {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(100% - 6px);
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px 0;
+}
+.gl-suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+.gl-suggest-item:hover, .gl-suggest-item:active { background: var(--color-primary-light); }
+.gl-suggest-item .material-icons { font-size: 18px; color: var(--color-text-hint); }
+.gl-suggest-main { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-suggest-price { flex-shrink: 0; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; font-size: 14px; }
+.gl-suggest-price small { display: block; font-weight: 400; font-size: 11px; color: var(--color-text-secondary); }
+.gl-suggest-meta { font-size: 12px; color: var(--color-text-secondary); flex-shrink: 0; }
+
+.gl-select-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px calc(10px);
+  background: var(--color-surface);
+  box-shadow: 0 -2px 10px rgba(0,0,0,.08);
+}
+.gl-select-count { flex: 1; font-size: 14px; font-weight: 600; padding-left: 8px; }
+.gl-select-bar .btn-text { padding: 8px 10px; }
+.gl-select-bar .btn-text .material-icons { font-size: 18px; vertical-align: middle; }
+
+.gl-empty { padding: 36px 24px; }
+
+/* ── Edit sheet bits ───────────────────────────────────────────────────────── */
+.gl-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gl-qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-primary);
+  background: none;
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.gl-qty-btn .material-icons { font-size: 18px; }
+.gl-qty-btn:disabled { opacity: .4; }
+.gl-qty-input {
+  width: 56px;
+  text-align: center;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-bottom: 1.5px solid var(--color-border);
+  background: none;
+  color: var(--color-text);
+  padding: 4px 0;
+  outline: none;
+}
+.gl-qty-input:focus { border-bottom-color: var(--color-primary); }
+.gl-bought-row { display: flex; align-items: center; gap: 8px; }
+.gl-bought-row .valu-date-field { flex: 1; }
+.gl-link-btn {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.gl-paid-in { padding-top: 4px; }
+
+/* ── History / Insights ────────────────────────────────────────────────────── */
+.gl-total-hero { text-align: center; padding: 8px 16px 12px; }
+.gl-total-hero-amount { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.gl-total-hero-label { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+.gl-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 16px 4px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.gl-day-head span:last-child { font-variant-numeric: tabular-nums; }
+
+.gl-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 150px;
+  padding: 8px 4px 0;
+}
+.gl-bar-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.gl-bar {
+  width: 100%;
+  max-width: 28px;
+  min-height: 3px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #97B6B6, #729c9c);
+  opacity: .55;
+  transition: opacity .15s;
+}
+.gl-bar-col.active .gl-bar { opacity: 1; }
+/* Current month: one bar, solid = spent so far, striped top = estimate for the rest of the month. */
+.gl-bar--est {
+  position: relative;
+  overflow: hidden;
+  background: repeating-linear-gradient(135deg, rgba(151,182,182,.55) 0 4px, rgba(151,182,182,.2) 4px 8px);
+  outline: 1px dashed #729c9c;
+  outline-offset: -1px;
+}
+.gl-bar-spent {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(180deg, #97B6B6, #729c9c);
+}
+.gl-bar-label { font-size: 10px; color: var(--color-text-hint); white-space: nowrap; }
+.gl-bar-col.active .gl-bar-label { color: var(--color-primary); font-weight: 700; }
+
+.gl-hbar-row { padding: 8px 0; }
+.gl-hbar-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; margin-bottom: 5px; }
+.gl-hbar-top span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; flex-shrink: 0; }
+.gl-hbar-track { height: 8px; border-radius: 4px; background: var(--color-primary-light); overflow: hidden; }
+.gl-hbar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #97B6B6, #729c9c); }
+
+.gl-chip-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px; }
+
+/* ── Stores ────────────────────────────────────────────────────────────────── */
+.gl-store-card-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.gl-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+.gl-pill--muted { background: var(--color-surface-alt); color: var(--color-text-secondary); }
+
+/* Stores page: rich rows with figures, a show/hide switch and a checkbox */
+.gl-store-filter { padding-top: 4px; padding-bottom: 0; flex-shrink: 0; }
+.subpage-scroll > .gl-summary, .subpage-scroll > .gl-store-list { flex-shrink: 0; }
+.gl-store-row { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 12px 16px 12px 20px; }
+.gl-store-row--hidden .gl-store-row-body { opacity: .55; }
+.gl-store-row .gl-check { margin-left: -8px; }
+.gl-store-row--selected { box-shadow: inset 0 0 0 2px var(--color-primary); }
+.gl-store-row-body { flex: 1; min-width: 0; padding: 2px 0; }
+.gl-store-row-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gl-store-stats { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 4px; font-size: 12px; color: var(--color-text-secondary); }
+.gl-store-stats > span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.gl-store-stats .material-icons { font-size: 14px; color: var(--color-text-hint); }
+.gl-store-stats .gl-store-stat--hot { color: var(--color-primary); font-weight: 700; }
+.gl-store-stats .gl-store-stat--hot .material-icons { color: var(--color-primary); }
+.gl-store-warn { margin-top: 4px; font-size: 12px; color: var(--color-warning, #b07d4f); }
+.gl-store-toggle { margin-left: 4px; }
+.gl-store-reorder-hint { margin: 0 4px 8px; font-size: 12px; color: var(--color-text-secondary); }
+.gl-store-city-head {
+  display: flex; align-items: center; gap: 8px;
+  margin: 12px 4px 8px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.gl-store-city-head span { font-weight: 600; color: var(--color-text-hint); }
+.gl-store-select-bar { z-index: 6; }
+
+/* Small screens: keep the price column from squeezing titles */
+@media (max-width: 360px) {
+  .gl-item { gap: 8px; }
+  .gl-item-qty { display: none; }
+}
+
+/* ── Quantity, original-currency prices ───────────────────────────────────── */
+.gl-item-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gl-item-head .gl-item-title { flex: 0 1 auto; min-width: 0; }
+.gl-item-head .gl-item-qty { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-item-price { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.gl-item-price-sub { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
+
+/* ── Quick add: quantity (and price while recording a past purchase) ──────── */
+.gl-quick-qty {
+  flex: 0 0 auto;
+  width: 62px;
+  border: none;
+  outline: none;
+  border-left: 1px solid var(--color-border);
+  background: none;
+  font: inherit;
+  font-size: .9375rem;
+  text-align: center;
+  color: var(--color-text);
+  padding: 12px 4px;
+}
+.gl-quick-qty::placeholder { color: var(--color-text-hint); }
+.gl-quick-price { width: 70px; }
+@media (max-width: 420px) {
+  .gl-quick-qty { width: 50px; padding-left: 2px; padding-right: 2px; }
+  .gl-quick-price { width: 60px; }
+}
+
+
+/* ── Confirmation toast + price prompt after ticking ──────────────────────── */
+.gl-toast {
+  margin: 0 0 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+.gl-snack {
+  margin: 0 0 8px;
+  padding: 8px 10px 10px 14px;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+.gl-snack-head { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.gl-snack-head > .material-icons { font-size: 18px; color: var(--color-primary); }
+.gl-snack-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-snack-undo { border: none; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--color-primary); cursor: pointer; padding: 6px 8px; }
+.gl-snack-close { width: 32px; height: 32px; }
+.gl-snack-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.gl-snack-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-bottom: 1.5px solid var(--color-border);
+  background: none;
+  font: inherit;
+  font-size: 1.125rem;
+  color: var(--color-text);
+  padding: 8px 2px;
+  outline: none;
+}
+.gl-snack-input:focus { border-bottom-color: var(--color-primary); }
+.gl-snack-cur { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+.gl-snack-save {
+  border: none;
+  border-radius: 18px;
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+.gl-snack-save:disabled { opacity: .5; }
+
+/* ── Selection bar with several actions ───────────────────────────────────── */
+.gl-select-bar--stack { flex-direction: column; align-items: stretch; gap: 2px; padding-bottom: calc(8px + var(--bottom-inset, 0px)); }
+.gl-select-top { display: flex; align-items: center; gap: 4px; }
+.gl-select-actions { display: flex; justify-content: space-around; gap: 2px; }
+.gl-act {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 2px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.gl-act .material-icons { font-size: 22px; }
+.gl-act:active { background: var(--color-primary-light); }
+.gl-act:disabled { opacity: .35; cursor: default; }
+.gl-act--danger { color: var(--color-danger, #c0564b); }
+.gl-done-head .gl-check { width: 28px; height: 28px; }
+.gl-done-head .gl-check-circle { width: 20px; height: 20px; }
+.gl-done-head .gl-check .material-icons { transform: none; font-size: 14px; }
+
+.gl-sheet-hint { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 12px; }
+
+/* ── Filter chips + "add from a previous trip" ────────────────────────────── */
+.gl-filter-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 18px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gl-filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.gl-trip-filters { padding: 0 16px 8px; }
+.gl-trip-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 22px;
+  background: var(--color-surface-alt, rgba(0,0,0,.05));
+}
+.gl-trip-search .material-icons { font-size: 20px; color: var(--color-text-hint); }
+.gl-trip-search input { flex: 1; min-width: 0; border: none; outline: none; background: none; font: inherit; font-size: 15px; color: var(--color-text); padding: 11px 0; }
+.gl-trip-search-clear { border: none; background: none; padding: 4px; cursor: pointer; display: inline-flex; color: var(--color-text-hint); }
+.gl-trip-chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 2px; scrollbar-width: none; }
+.gl-trip-chips::-webkit-scrollbar { display: none; }
+.gl-trip { border-bottom: 1px solid var(--color-border); }
+.gl-trip-head { display: flex; align-items: center; gap: 4px; padding: 6px 0; }
+.gl-trip-title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 4px 4px; border: none; background: none; font: inherit; text-align: left; color: var(--color-text); cursor: pointer; }
+.gl-trip-date { font-size: 15px; font-weight: 700; }
+.gl-trip-meta { font-size: 12px; color: var(--color-text-secondary); }
+.gl-trip-chevron { border: none; background: none; padding: 8px; display: inline-flex; color: var(--color-text-secondary); cursor: pointer; }
+.gl-trip-chevron .material-icons { transition: transform .2s; }
+.gl-trip-chevron.open .material-icons { transform: rotate(180deg); }
+.gl-trip-items { padding: 0 0 8px 8px; }
+.gl-trip-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; cursor: pointer; }
+.gl-trip-row .gl-check { width: 36px; height: 36px; }
+.gl-trip-row--on { opacity: .55; cursor: default; }
+.gl-trip-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.gl-trip-row .gl-item-qty { max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-trip-price { margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+.gl-trip-row .gl-pill { margin-left: auto; }
+.gl-check.partial .gl-check-circle { background: var(--color-primary-light); color: var(--color-primary); }
+.gl-trip-opt { display: flex; align-items: center; gap: 4px; font-size: 14px; cursor: pointer; }
+.gl-trip-opt .gl-check { width: 34px; height: 34px; }
+.gl-trip-opt small { color: var(--color-text-secondary); }
+/* History: selecting days / items to add to the list again */
+.gl-select-bar--fixed { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding-bottom: calc(10px + var(--bottom-inset, 0px)); }
+.gl-toast--floating { position: fixed; left: 16px; right: 16px; bottom: calc(76px + var(--bottom-inset, 0px)); z-index: 31; max-width: 468px; margin: 0 auto; }
+.gl-day-head--select { cursor: pointer; }
+.gl-day-head-title { display: inline-flex; align-items: center; gap: 4px; }
+.gl-day-head-title .gl-check { width: 28px; height: 28px; }
+.gl-day-head-title .gl-check-circle { width: 20px; height: 20px; }
+.gl-day-head-title .gl-check .material-icons { font-size: 14px; }
+.gl-hist-selected { background: var(--color-primary-light); }
+.valu-list-row > .gl-check { width: 30px; height: 30px; }
+/* Sign toggle for amounts (phone number keypads have no minus key): discounts and refunds */
+.gl-sign-btn {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.gl-sign-btn:hover { background: var(--color-primary-light); }
+.fx-input-row .gl-sign-btn, .gl-snack-row .gl-sign-btn { margin: 0 8px 0 0; }
+
+/* ── History: toolbar, products, copy dialog ───────────────────────────────── */
+.subpage-scroll > .gl-hist-toolbar, .subpage-scroll > .gl-hist-bar, .subpage-scroll > .subpage-header,
+.subpage-scroll > .valu-list, .subpage-scroll > .gl-hist-more, .subpage-scroll > .gl-hist-spacer { flex-shrink: 0; }
+.gl-hist-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 16px 8px; }
+.gl-hist-views { display: flex; gap: 8px; }
+.gl-hist-bar { flex-wrap: wrap; }
+.gl-hist-btn-label { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-hist-more { display: block; margin: 12px auto 4px; }
+.gl-hist-spacer { height: 120px; }
+.gl-toast--above-bar { bottom: calc(132px + var(--bottom-inset, 0px)); }
+.gl-prod-cheap { color: var(--color-primary); font-weight: 600; }
+.gl-prod-chevron { color: var(--color-text-hint); align-self: center; margin-left: 4px; }
+.gl-prod-detail { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.gl-prod-store { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; font-size: 13px; }
+.gl-prod-store-name { min-width: 0; }
+.gl-prod-store-meta { color: var(--color-text-secondary); font-variant-numeric: tabular-nums; text-align: right; }
+.gl-prod-badge { margin-left: 6px; padding: 1px 7px; border-radius: 10px; background: var(--color-primary-light); color: var(--color-primary); font-size: 11px; font-weight: 700; }
+.gl-period-year .month-picker-label { font-weight: 800; }
+.gl-period-month { padding-left: 32px; }
+.gl-period-custom { padding: 8px 20px 16px; border-top: 1px solid var(--color-border); margin-top: 4px; }
+.gl-store-pick-search { display: flex; align-items: center; gap: 8px; margin: 0 16px 8px; padding: 0 12px; height: 38px; border: 1px solid var(--color-border); border-radius: 20px; }
+.gl-store-pick-search .material-icons { font-size: 18px; color: var(--color-text-hint); }
+.gl-store-pick-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font: inherit; font-size: 14px; color: var(--color-text); }
+.gl-sort-icon { font-size: 18px; vertical-align: -4px; margin-right: 10px; color: var(--color-text-hint); }
+.gl-copy-field { display: flex; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; font-size: 15px; }
+.gl-copy-preview { margin: 0 0 8px; padding: 10px 12px; border-radius: 10px; background: var(--color-bg, rgba(0,0,0,.04)); border: 1px solid var(--color-border); font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre; overflow-x: auto; color: var(--color-text); }.gl-copy-field { padding: 2px 0; }
+.gl-copy-field .gl-check { width: 28px; height: 28px; }
+.gl-copy-field .gl-check-circle { width: 20px; height: 20px; }
+.gl-copy-field .gl-check .material-icons { font-size: 14px; }.gl-store-pick-row .month-picker-label { flex: 1; text-align: left; min-width: 0; }
+.gl-store-pick-row .gl-check { width: 28px; height: 28px; flex-shrink: 0; }
+.gl-store-pick-row .gl-check-circle { width: 20px; height: 20px; }
+.gl-store-pick-row .gl-check .material-icons { font-size: 14px; }
+/* ── Nutrition ───────────────────────────────────────────────────────────────── */
+.subpage-scroll > .gl-nutri { flex-shrink: 0; padding: 8px 16px 32px; }
+.gl-home-nutri { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: none; font: inherit; text-align: left; color: inherit; cursor: pointer; }
+.gl-home-nutri-icon { color: var(--color-primary); }
+.gl-home-nutri-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gl-home-nutri-text small { color: var(--color-text-secondary); font-size: 12px; }
+.gl-nutri-chips { overflow-x: auto; padding: 0 0 8px; scrollbar-width: none; }
+.gl-nutri-chips::-webkit-scrollbar { display: none; }
+.gl-nutri-unit { font-size: 15px; font-weight: 600; color: var(--color-text-secondary); }
+.gl-macro-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--color-border); }
+.gl-macro { display: block; height: 100%; }
+.gl-macro--p { background: #7da3a1; }
+.gl-macro--c { background: #e3b778; }
+.gl-macro--f { background: #d98f85; }
+.gl-macro-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.gl-macro-item { display: grid; grid-template-columns: 12px 64px 1fr auto; align-items: center; gap: 8px; font-size: 13px; }
+.gl-macro-dot { width: 12px; height: 12px; border-radius: 50%; }
+.gl-macro-name { font-weight: 700; }
+.gl-macro-val { color: var(--color-text-secondary); }
+.gl-macro-sub { color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.gl-nutri-cat { cursor: pointer; }
+.gl-nutri-cat-items { margin: 6px 0 2px; padding-left: 10px; border-left: 2px solid var(--color-border); }
+.gl-nutri-cat-item { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; font-size: 12.5px; color: var(--color-text-secondary); }
+.gl-nutri-row { display: flex; align-items: center; gap: 8px; padding: 11px 0; border-bottom: 1px solid var(--color-border); cursor: pointer; font-size: 14px; }
+.gl-nutri-row:last-child { border-bottom: none; }
+.gl-nutri-row > span:first-child { flex: 1; min-width: 0; }
+.gl-nutri-row-meta { color: var(--color-text-secondary); font-size: 12px; white-space: nowrap; }
+.gl-nutri-row .material-icons { color: var(--color-text-hint); font-size: 20px; }
+.gl-nutri-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.gl-nutri-list { margin: 4px 0 8px; }
+.gl-nutri-pick-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--color-text-secondary); }
+.gl-nutri-pick { max-height: 180px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 10px; padding: 4px 10px; margin-bottom: 6px; }
+.gl-nutri-links { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 10px 0 4px; font-size: 13px; color: var(--color-text-secondary); }
+.gl-nutri-links a { color: var(--color-primary); font-weight: 700; text-decoration: none; }
+.gl-nutri-details { margin: 6px 0; font-size: 13px; color: var(--color-text-secondary); }
+.gl-nutri-details summary { cursor: pointer; padding: 4px 0; }
+.gl-nutri-details .gl-copy-preview { max-height: 200px; overflow: auto; white-space: pre-wrap; }
+.gl-nutri-summary { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 0 6px; font-size: 13px; font-weight: 700; }
+.gl-nutri-summary > span { display: inline-flex; align-items: center; gap: 4px; }
+.gl-nutri-summary .material-icons { font-size: 18px; }
+.gl-ok { color: #4f8a64; }
+.gl-warn { color: #c58a2b; }
+.gl-bad { color: var(--color-danger, #c0564b); }
+.gl-nutri-prev { padding: 8px 10px; margin-bottom: 6px; border-radius: 10px; border: 1px solid var(--color-border); }
+.gl-nutri-prev--error { opacity: .75; border-color: var(--color-danger, #c0564b); }
+.gl-nutri-prev--review { border-color: #c58a2b; }
+.gl-nutri-prev-top { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.gl-nutri-prev-top .material-icons { font-size: 18px; flex-shrink: 0; }
+.gl-nutri-prev-top strong { flex: 1; min-width: 0; }
+.gl-nutri-prev-kcal { font-variant-numeric: tabular-nums; font-size: 13px; }
+.gl-nutri-prev-sub { margin: 2px 0 0 24px; font-size: 12px; color: var(--color-text-secondary); }
+.gl-nutri-prev-problem { margin: 2px 0 0 24px; font-size: 12px; color: #a56e12; }
+.gl-nutri-prev--error .gl-nutri-prev-problem, .gl-nutri-prev-problem--bad { color: var(--color-danger, #c0564b); }.gl-nutri-chips .gl-store-tab { padding: 7px 11px; }.gl-home-nutri--stats { flex-direction: column; align-items: stretch; gap: 12px; }
+.gl-home-nutri-top { display: flex; align-items: center; gap: 12px; }
+.gl-home-nutri-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--color-text-secondary); }
+.gl-home-nutri-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.gl-home-nutri-legend .gl-macro-dot { width: 10px; height: 10px; }.gl-prod-note { margin: 6px 0 4px; font-size: 12px; color: var(--color-text-hint); line-height: 1.4; }

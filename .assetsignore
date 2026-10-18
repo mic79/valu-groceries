@@ -1,0 +1,10 @@
+# Cloudflare Workers static assets: files listed here are NOT uploaded/served.
+.wrangler
+node_modules
+cloudflare-worker
+tests
+README.md
+package.json
+package-lock.json
+.assetsignore
+.gitignore

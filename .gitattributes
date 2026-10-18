@@ -1,0 +1,5 @@
+# Keep line endings as LF in the repo and on every checkout (minified vendor files and the service worker must not change).
+* text=auto eol=lf
+*.woff2 binary
+*.png binary
+*.ico binary

@@ -1,0 +1,15 @@
+name = "valu-groceries-auth"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+GOOGLE_CLIENT_ID = "399400088485-h2nrjmo500qj4s7qrvfaog2tsqet3huo.apps.googleusercontent.com"
+# Exact origins only (scheme + host + port, no path). Add the address where you host Valu Groceries,
+# for example "https://groceries.example.com". The localhost entries are for local testing only.
+ALLOWED_ORIGINS = "https://groceries.valu-app.com,http://localhost:8000,http://localhost:8080,http://127.0.0.1:8000,http://127.0.0.1:8080"
+# Optional: force a fresh Google sign-in after this many days (leave unset = tokens never expire).
+# REFRESH_TOKEN_MAX_AGE_DAYS = "365"
+
+# Secrets (never commit them):
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+#   wrangler secret put ENCRYPTION_SECRET     (any long random string; it seals the stored refresh tokens)
