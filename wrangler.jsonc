@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "valu-groceries",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./"
+  },
+  "routes": [
+    { "pattern": "groceries.valu-app.com", "custom_domain": true }
+  ]
+}
