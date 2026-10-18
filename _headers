@@ -1,9 +1,9 @@
 # Cloudflare static-assets headers (read from the ROOT of the deployed folder).
 #
-# The Content-Security-Policy is deliberately REPORT-ONLY: it never blocks anything, it only prints
-# "Content-Security-Policy-Report-Only" warnings in the browser console. Use the app normally
-# (sign in, Picker, foreign-currency prices...), fix or allow whatever it reports, and only then
-# rename the header to Content-Security-Policy to enforce it.
+# The Content-Security-Policy is ENFORCED: the browser blocks anything not listed here. Checked on the live site:
+# every page of the demo and the Google Picker load with no violations. If a new feature needs another address
+# (a script, an API, a frame), add it below; the browser console says exactly what was blocked.
+# To debug a blocking problem safely, temporarily rename the header to Content-Security-Policy-Report-Only.
 #
 # 'unsafe-eval' is required because Vue compiles the components' string templates in the browser.
 # 'unsafe-inline' for styles is required by Vue's :style bindings and inline style attributes.
@@ -14,7 +14,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-eval' https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://www.gstatic.com; font-src 'self' data:; img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com https://www.google.com; connect-src 'self' https://sheets.googleapis.com https://www.googleapis.com https://content.googleapis.com https://oauth2.googleapis.com https://valu-auth.valu.workers.dev https://valu-auth-dev.valu.workers.dev https://valu-groceries-auth.valu.workers.dev https://api.frankfurter.dev https://apis.google.com; frame-src https://docs.google.com https://accounts.google.com https://content.googleapis.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://www.gstatic.com; font-src 'self' data:; img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com https://www.google.com; connect-src 'self' https://sheets.googleapis.com https://www.googleapis.com https://content.googleapis.com https://oauth2.googleapis.com https://valu-groceries-auth.valu.workers.dev https://api.frankfurter.dev https://apis.google.com; frame-src https://docs.google.com https://accounts.google.com https://content.googleapis.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
 
 # Never let browsers or CDNs hold on to the service worker or version file.
 /service-worker.js
