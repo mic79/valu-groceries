@@ -194,6 +194,7 @@
             :user-profile="userProfile"
             :group-name="activeGroupName"
             :change-tick="changeTick"
+            :page-intent="pageIntent"
             :is-demo-group="!!(activeGroup && activeGroup.id === demoSheetId)"
             @navigate="(page, opts) => navigateTo(page, opts)"
             @switch-group="switchGroup"

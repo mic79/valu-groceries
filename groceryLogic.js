@@ -278,6 +278,22 @@ export function pendingItems(items, storeId) {
     .sort((a, b) => a.order - b.order || String(a.createdAt).localeCompare(String(b.createdAt)));
 }
 
+/**
+ * The first visible store tab that has something to buy, in the same order as the Groceries tabs.
+ * `''` is the Anywhere list (items with no store). `null` when the list is empty.
+ */
+export function firstStoreWithPending(items, stores) {
+  const pending = (items || []).filter((i) => i && !i.checkedDate);
+  if (!pending.length) return null;
+  const active = [...(stores || [])]
+    .filter((s) => s && s.id && !s.hidden)
+    .sort((a, b) => (a.order - b.order) || String(a.name || '').localeCompare(String(b.name || '')));
+  for (const s of active) {
+    if (pending.some((i) => i.storeId === s.id)) return s.id;
+  }
+  return '';
+}
+
 /** Next Order value for a new item at the end of a store's list. */
 export function nextOrder(items, storeId) {
   const orders = items.filter((i) => (i.storeId || '') === (storeId || '')).map((i) => i.order);

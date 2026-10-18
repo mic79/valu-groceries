@@ -61,7 +61,7 @@ const GlItem = {
 
 export default {
   components: { GlItem, TripSheet, StoreSheet, ItemSheet },
-  props: ['sheetId', 'settings', 'stores', 'changeTick', 'groupName'],
+  props: ['sheetId', 'settings', 'stores', 'changeTick', 'groupName', 'pageIntent'],
   emits: ['go-home', 'navigate', 'refresh', 'settings-updated', 'stores-updated'],
 
   setup(props, { emit }) {
@@ -186,6 +186,12 @@ export default {
     }
 
     function restoreSelectedStore() {
+      const intent = props.pageIntent;
+      if (intent && Object.prototype.hasOwnProperty.call(intent, 'storeId')) {
+        selectedStore.value = intent.storeId;
+        try { localStorage.setItem(LS_STORE + props.sheetId, intent.storeId); } catch { /* private mode */ }
+        return;
+      }
       let saved = null;
       try { saved = localStorage.getItem(LS_STORE + props.sheetId); } catch { /* ignore */ }
       selectedStore.value = saved;

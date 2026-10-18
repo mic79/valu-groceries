@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   localDateISO, normalizeDate, dateFromEpochMs, isFutureDate, monthKey, parseAmount, roundMoney,
   sanitizeAmountText, flipSign, formatCurrency, cleanQuantity, sanitizeQuantityText, capitalizeFirst, parseCurrencyRates, textCell, rowToItem, itemToRow,
-  rowToStore, storeToRow, pendingItems, nextOrder, sumPrices, groupCheckedByDate, reorderList,
+  rowToStore, storeToRow, pendingItems, firstStoreWithPending, nextOrder, sumPrices, groupCheckedByDate, reorderList,
   buildSuggestions, lastPurchase, buildTrips, copyForList, onListKeys, listKey,
   spendingByMonth, storeBreakdown, topItems, estimateCurrentMonth,
   convertNutriRows, guessBaseCurrency, ITEM_HEADERS, STORE_HEADERS,
@@ -386,4 +386,18 @@ test('quantity input only accepts a plain number', () => {
   assert.equal(cleanQuantity('1,5'), '1.5');
   assert.equal(cleanQuantity('007'), '7');
   assert.equal(cleanQuantity('0'), '');
+});
+
+test('first store with something to buy follows tab order, skips empty and hidden shops', () => {
+  const stores = [
+    { id: 'a', name: 'Metro', order: 0, hidden: false },
+    { id: 'b', name: 'Nutri', order: 1, hidden: false },
+    { id: 'c', name: 'Hidden', order: 2, hidden: true },
+  ];
+  assert.equal(firstStoreWithPending([], stores), null);
+  assert.equal(firstStoreWithPending([item({ storeId: 'a', checkedDate: '2026-01-01' })], stores), null);
+  assert.equal(firstStoreWithPending([item({ storeId: 'b' })], stores), 'b');
+  assert.equal(firstStoreWithPending([item({ storeId: 'b' }), item({ storeId: 'a' })], stores), 'a');
+  assert.equal(firstStoreWithPending([item({ storeId: '' })], stores), '');
+  assert.equal(firstStoreWithPending([item({ storeId: 'c' })], stores), '');
 });

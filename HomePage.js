@@ -7,7 +7,7 @@
 import SheetsApi, { TABS } from './sheetsApi.js';
 import {
   formatCurrency, rowToItem, spendingByMonth, storeBreakdown, topItems, estimateCurrentMonth, monthKey,
-  localDateISO, roundMoney,
+  localDateISO, roundMoney, firstStoreWithPending,
 } from './groceryLogic.js';
 import { formatMonthLabel, formatMonthShort } from './dateLabels.js';
 import { loadLayout } from './homeLayout.js';
@@ -29,7 +29,7 @@ export default {
   props: ['sheetId', 'settings', 'stores', 'changeTick'],
   emits: ['navigate'],
 
-  setup(props) {
+  setup(props, { emit }) {
     const items = ref([]);
     const nutriEntries = ref([]);
     // The layout is chosen in Settings (kept on this device) and read each time Home opens.
@@ -143,8 +143,13 @@ export default {
     watch(() => props.changeTick, () => load(true));
     onMounted(() => load());
 
+    function openList() {
+      const storeId = firstStoreWithPending(toBuy.value, props.stores);
+      emit('navigate', 'groceries', storeId === null ? undefined : { storeId });
+    }
+
     return {
-      loading, loadError, load, trackPrices, fmt, bars, selectedMonth, monthTotal, estimate, isCurrentMonth,
+      loading, loadError, load, openList, trackPrices, fmt, bars, selectedMonth, monthTotal, estimate, isCurrentMonth,
       trips, perTrip, breakdown, top, hasPurchases, nutri, widgetOrder, formatMonthLabel, toBuy, toBuyTotal, toBuyStores,
       monthItemCount: computed(() => monthPurchases.value.length),
     };
@@ -177,7 +182,7 @@ export default {
               </div>
               <div v-else class="gl-home-list-stores">Your shopping list is empty.</div>
             </div>
-            <button class="btn btn-primary btn-sm" @click="$emit('navigate', 'groceries')">Open list</button>
+            <button class="btn btn-primary btn-sm" @click="openList">Open list</button>
           </div>
         </div>
 

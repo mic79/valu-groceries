@@ -202,6 +202,7 @@ const app = createApp({
       if (!on && currentPage.value === 'nutrition') currentPage.value = 'home';
     });
 
+    const pageIntent = ref(null);
     async function navigateTo(page, opts) {
       if (page === 'nutrition' && !nutritionVisible.value) page = 'home';
       const allowedWithoutGroup = page === 'home' || page === 'groups' || page === 'settings' || page === 'faq' || page === 'about';
@@ -209,6 +210,7 @@ const app = createApp({
         currentPage.value = 'home';
         return;
       }
+      pageIntent.value = opts && Object.keys(opts).length ? opts : null;
       currentPage.value = page;
       if (opts && opts.scrollTo) {
         const tryScroll = (attempts) => {
@@ -660,7 +662,7 @@ const app = createApp({
       activeSheetId, activeGroupName, groupDisplayName, sideNavOpen, showGroupSwitcher,
       demoHomeCallout, demoNoticeDismissed,
       needsReconnect, reconnect, connect, swUpdateReady, applySwUpdate, canInstall, installApp,
-      navigateTo, nutritionVisible, groupHasNutrition, showNutritionPref, setShowNutritionPref,
+      navigateTo, pageIntent, nutritionVisible, groupHasNutrition, showNutritionPref, setShowNutritionPref,
       onAuthChange, signOut,
       startQuickLookDemo, leaveDemoToSignIn,
       switchGroup, onGroupCreated, onSharedOpened,
