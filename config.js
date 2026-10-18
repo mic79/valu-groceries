@@ -19,7 +19,7 @@ const API_KEY = 'AIzaSyBdC9q6tLx1vLOFyUF-8Jeuy4gpuTYiaPs';
  * Auth worker (token exchange + silent refresh): the deployment of `cloudflare-worker/`. It only accepts the
  * origins listed in its ALLOWED_ORIGINS (groceries.valu-app.com and localhost for testing).
  */
-const WORKER_URL = 'https://valu-groceries-auth.odd-bird-4c2c.workers.dev';
+const WORKER_URL = 'https://valu-groceries-auth.valu.workers.dev';
 
 /** PKCE for the sign-in code flow. Requires the hardened worker in `cloudflare-worker/`. */
 const USE_PKCE = true;
