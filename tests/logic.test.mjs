@@ -20,6 +20,8 @@ test('dates: normalise, epoch conversion, future check', () => {
   assert.equal(normalizeDate(undefined), '');
   assert.equal(localDateISO(new Date(2026, 0, 5)), '2026-01-05');
   assert.equal(dateFromEpochMs(new Date(2024, 4, 1, 12).getTime()), '2024-05-01');
+  // Nutri stored a picked YYYY-MM-DD as UTC midnight. That must stay that calendar day, not the previous local evening.
+  assert.equal(dateFromEpochMs(Date.parse('2026-07-01T00:00:00.000Z')), '2026-07-01');
   assert.equal(dateFromEpochMs(''), '');
   assert.equal(dateFromEpochMs(0), '');
   assert.equal(isFutureDate('2999-01-01'), true);
@@ -333,6 +335,8 @@ test('Nutri import converts ids, prices, dates and store links, idempotently', (
   assert.deepEqual(a.stores.map((s) => [s.id, s.name, s.hidden, s.city]), [['n_loc1', 'Metro', false, 'Montreal'], ['n_loc2', 'Costco', true, '']]);
   assert.equal(a.items.length, 2);
   assert.deepEqual([a.items[0].id, a.items[0].quantity, a.items[0].price, a.items[0].storeId, a.items[0].checkedDate], ['n_g1', '2', 3.5, 'n_loc1', '2024-05-01']);
+  const picked = convertNutriRows([['g3', 'Bread', '1', '2', 0, '', Date.parse('2026-07-01T00:00:00.000Z')]], [], new Date(2026, 0, 1));
+  assert.equal(picked.items[0].checkedDate, '2026-07-01', 'a Nutri date picked as 1 July stays 1 July');
   assert.equal(a.items[1].storeId, '', 'unknown store becomes Anywhere');
   assert.equal(a.items[1].checkedDate, '');
   assert.equal(a.items[1].quantity, '', 'Nutri left the amount blank, so it stays blank');

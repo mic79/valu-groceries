@@ -208,7 +208,7 @@ export default {
         return;
       }
       if (!picked) return;
-      if (!(await showConfirm('Copy the lists, history and nutrition data from "' + picked.name + '" into this group? The old sheet is not changed, and importing twice never creates duplicates.'))) return;
+      if (!(await showConfirm('Copy the lists, history and nutrition data from "' + picked.name + '" into this group? The old sheet is not changed. Importing twice never creates duplicates; it also corrects purchase dates on items already imported so monthly totals match Nutri.'))) return;
       importing.value = true;
       try {
         const r = await importFromNutri(targetId, picked.id);
@@ -222,6 +222,7 @@ export default {
           msg += ` ${r.nutritionReview} of the nutrition entries need a look` + (why ? ` (${why})` : '') + `. On the Nutrition page, tap Show list, then "Needs a look".`;
         }
         if (r.nutritionSkipped) msg += ` ${r.nutritionSkipped} nutrition ${r.nutritionSkipped === 1 ? 'row' : 'rows'} had impossible values and ${r.nutritionSkipped === 1 ? 'was' : 'were'} left out.`;
+        if (r.datesFixed) msg += ` ${r.datesFixed} purchase date${r.datesFixed === 1 ? ' was' : 's were'} corrected to match Nutri.`;
         if (r.skipped) msg += ` ${r.skipped} were already here and were skipped.`;
         showAlert(msg);
       } catch (err) {

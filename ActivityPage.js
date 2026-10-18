@@ -248,6 +248,7 @@ export default {
           </div>
           <div class="activity-feed-body">
             <ul class="activity-feed-list">
+              <li><strong>Nutri dates match Finance</strong> — Imported purchases now use the same calendar day Nutri showed. If you already imported, run <strong>Import from Nutri</strong> once more; existing items are not duplicated, only the dates are corrected.</li>
               <li><strong>Same layout as Valu Finance</strong> — The home page is now your dashboard. Open the shopping list from the <strong>Groceries</strong> tab, next to Stores, History and Settings.</li>
               <li><strong>A much better History</strong> — Pick a year, month, day or date range, filter on several stores, sort, and switch to <strong>Products</strong> to see average prices and where each product is cheapest. Tap a purchase to correct it. Select several to change their date, move them, delete them or <strong>copy them to the clipboard</strong> with the fields you choose.</li>
               <li><strong>Nutrition</strong> — See the calories, protein, carbs and fat of what you buy, per day and per month. Common groceries are filled in automatically; for the rest you can copy a request into the AI assistant of your choice and paste its answer back. The app itself sends nothing. Turn it off for a whole group under <strong>Groups</strong>, or hide it on this device under <strong>Settings</strong>.</li>

@@ -48,6 +48,7 @@ function fakeSheets({ source, target }) {
   SheetsApi.ensureSchema = async () => {};
   SheetsApi.getTabData = async (id, tab) => target[tab] || [];
   SheetsApi.appendRows = async (id, tab, rows) => { written.push({ tab, rows }); target[tab] = [...(target[tab] || []), ...rows]; };
+  SheetsApi.batchUpdateRows = async (id, tab, updates) => { written.push({ tab, updates, kind: 'update' }); };
   return { written, restore: () => Object.assign(SheetsApi, orig) };
 }
 
@@ -69,6 +70,7 @@ test('importing writes stores, items and nutrition, and a second run adds nothin
 
     const second = await importFromNutri('target', 'source');
     assert.equal(second.stores + second.items + second.nutrition, 0);
+    assert.equal(second.datesFixed, 0);
     assert.equal(second.skipped, 1 + 1 + 5);
   } finally { f.restore(); }
 });
@@ -120,4 +122,21 @@ test('doubtful imports are explained, and the same rules flag saved entries late
   const bun = convertNutriNutrition(rows).entries[0];
   assert.equal(problemKind(entryProblems(bun)[0]), 'pieces without a weight');
   assert.deepEqual(entryProblems({ ...bun, gramsPerUnit: 60 }), []);
+});
+
+test('re-import corrects a Nutri purchase date that was stored as the local evening before', async () => {
+  const epoch = Date.parse('2026-07-01T00:00:00.000Z');
+  const groceries = [['g1', 'Milk', '1', '3,50', 0, 'L1', epoch, '']];
+  const already = [['n_g1', 'Milk', '1', 3.5, 'n_L1', 0, "'2026-06-30", '', '2026-06-30T12:00:00.000Z', '', '']];
+  const f = fakeSheets({
+    source: { Groceries: groceries, Locations: LOCATIONS, Nutrition: [] },
+    target: { [TABS.ITEMS]: already, [TABS.STORES]: [['n_L1', 'Metro', '', 0, '', '']] },
+  });
+  try {
+    const r = await importFromNutri('target', 'source');
+    assert.equal(r.items, 0);
+    assert.equal(r.datesFixed, 1);
+    const upd = f.written.find((w) => w.kind === 'update');
+    assert.equal(upd.updates[0].values[6], "'2026-07-01");
+  } finally { f.restore(); }
 });

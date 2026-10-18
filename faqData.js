@@ -117,7 +117,7 @@ export const FAQ_ENTRIES = [
     question: 'Can I bring my data over from Nutri?',
     answer:
       'Yes. Open **Groups**, tap the group you want, and use **Import from Nutri**. Pick your old Nutri sheet and your stores, items, history and your Nutrition data (calories and macros per product) are copied in. ' +
-      'The old sheet is never changed, and importing twice does not create duplicates. Nutrition entries you already have in this group are kept, not overwritten; rows with impossible values are left out and you are told how many.\n\n' +
+      'The old sheet is never changed, and importing twice does not create duplicates. A second import also corrects purchase dates so they use the same calendar day Nutri showed (and Valu Finance used). Nutrition entries you already have in this group are kept, not overwritten; rows with impossible values are left out and you are told how many.\n\n' +
       'Nutri had no currencies, so imported prices are taken to be in the group\'s base currency.',
   },
   {

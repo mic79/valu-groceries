@@ -34,12 +34,18 @@ export function normalizeDate(value) {
   return dt.getFullYear() === y && dt.getMonth() === mo && dt.getDate() === d ? s : '';
 }
 
-/** Epoch milliseconds (as the old Nutri app stored them) to a local YYYY-MM-DD, or ''. */
+/**
+ * Epoch milliseconds (as the old Nutri app stored them) to YYYY-MM-DD, or ''.
+ * Nutri displayed the UTC calendar date (toISOString().slice(0, 10)), including when a picked
+ * YYYY-MM-DD was stored as UTC midnight. Using the local date would move those purchases back a
+ * day in the Americas and change the monthly totals.
+ */
 export function dateFromEpochMs(value) {
   const n = typeof value === 'number' ? value : parseInt(String(value ?? '').trim(), 10);
   if (!Number.isFinite(n) || n <= 0) return '';
   const d = new Date(n);
-  return Number.isNaN(d.getTime()) ? '' : localDateISO(d);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
 export function isFutureDate(iso, today = localDateISO()) {
@@ -574,6 +580,7 @@ export function estimateCurrentMonth(monthly, now = new Date()) {
  *   Nutri Groceries!A2:H : id, title, amount, price ("12,50"), order, locationId, checkedAtEpochMs, dateFormula
  *   Nutri Locations!A2:E : title, order, id, hidden ("true"/"false"), city
  * IDs get an "n_" prefix so importing the same sheet twice never creates duplicates.
+ * Checked dates use the UTC calendar day, which is what Nutri showed and what Valu Finance used.
  * Nutri prices have no currency, so they are taken to be in the group's base currency.
  */
 export function convertNutriRows(groceryRows, locationRows, now = new Date()) {

@@ -1,12 +1,12 @@
 /**
  * One-time import of a spreadsheet created by the old Nutri app into a Valu Groceries group.
  * Reads the Nutri "Groceries", "Locations" and "Nutrition" tabs (never writes to them) and appends the converted
- * rows to the group's Items, Stores and Nutrition tabs. Safe to run twice: rows that were already imported
- * (same Nutri id, or same product name for nutrition data) are skipped.
+ * rows to the group's Items, Stores and Nutrition tabs. Safe to run twice: new rows are not duplicated.
+ * A second run also corrects purchase dates on items already imported, so they match Nutri's UTC calendar day.
  */
 
 import SheetsApi, { TABS } from './sheetsApi.js';
-import { convertNutriRows, itemToRow, storeToRow } from './groceryLogic.js';
+import { convertNutriRows, itemToRow, storeToRow, rowToItem } from './groceryLogic.js';
 import { convertNutriNutrition, rowToNutrition, nutritionToRow, problemKind } from './nutritionLogic.js';
 
 const CHUNK = 400;
@@ -22,7 +22,8 @@ async function readOptional(sourceSheetId, range) {
 
 /**
  * @returns {Promise<{stores: number, items: number, nutrition: number, nutritionReview: number,
- *                    nutritionReasons: Object<string, number>, nutritionSkipped: number, skipped: number}>} how many rows were added (skipped = already here)
+ *                    nutritionReasons: Object<string, number>, nutritionSkipped: number, skipped: number,
+ *                    datesFixed: number}>} how many rows were added (skipped = already here; datesFixed = existing items whose purchase date was corrected)
  */
 export async function importFromNutri(targetSheetId, sourceSheetId) {
   const [groceryRows, locationRows, nutritionRows] = await Promise.all([
@@ -59,6 +60,19 @@ export async function importFromNutri(targetSheetId, sourceSheetId) {
   }
   if (newNutrition.length) await SheetsApi.appendRows(targetSheetId, TABS.NUTRITION, newNutrition.map(nutritionToRow));
 
+  // Earlier imports wrote Nutri epochs as a local calendar day. Nutri (and Finance) used the UTC
+  // day, so a second import puts those dates right without creating duplicates.
+  const existingById = new Map(existingItems.map((r) => [String(r[0]), rowToItem(r)]));
+  const dateFixes = [];
+  for (const i of converted.items) {
+    const prev = existingById.get(i.id);
+    if (!prev || prev.checkedDate === i.checkedDate) continue;
+    dateFixes.push({ id: i.id, values: itemToRow({ ...prev, checkedDate: i.checkedDate }) });
+  }
+  for (let i = 0; i < dateFixes.length; i += CHUNK) {
+    await SheetsApi.batchUpdateRows(targetSheetId, TABS.ITEMS, dateFixes.slice(i, i + CHUNK));
+  }
+
   // Doubtful entries among the ones actually added now, and why (an entry can have several reasons).
   const reasons = {};
   let review = 0;
@@ -77,5 +91,6 @@ export async function importFromNutri(targetSheetId, sourceSheetId) {
     nutritionReasons: reasons,
     nutritionSkipped: nutri.skipped.length,
     skipped: (converted.stores.length - newStores.length) + (converted.items.length - newItems.length) + (nutri.entries.length - newNutrition.length),
+    datesFixed: dateFixes.length,
   };
 }
