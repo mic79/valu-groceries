@@ -16,11 +16,10 @@ const CLIENT_ID = '399400088485-h2nrjmo500qj4s7qrvfaog2tsqet3huo.apps.googleuser
 const API_KEY = 'AIzaSyBdC9q6tLx1vLOFyUF-8Jeuy4gpuTYiaPs';
 
 /**
- * Auth worker (token exchange + silent refresh). Deploy `cloudflare-worker/` and put its URL here.
- * Until you deploy your own, this points at the existing Valu dev worker - which only accepts the
- * origins listed in ITS ALLOWED_ORIGINS (http://localhost:8080 is one of them).
+ * Auth worker (token exchange + silent refresh): the deployment of `cloudflare-worker/`. It only accepts the
+ * origins listed in its ALLOWED_ORIGINS (groceries.valu-app.com and localhost for testing).
  */
-const WORKER_URL = 'https://valu-auth-dev.valu.workers.dev';
+const WORKER_URL = 'https://valu-groceries-auth.odd-bird-4c2c.workers.dev';
 
 /** PKCE for the sign-in code flow. Requires the hardened worker in `cloudflare-worker/`. */
 const USE_PKCE = true;
