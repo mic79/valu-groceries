@@ -204,6 +204,9 @@
             @settings-updated="onSettingsUpdated"
             @refresh="refreshCurrentPage"
             @go-home="navigateTo('home')"
+            :group-has-nutrition="groupHasNutrition"
+            :show-nutrition-pref="showNutritionPref"
+            @set-show-nutrition="setShowNutritionPref"
           ></component>
         </template>
 
@@ -230,7 +233,7 @@
           <span class="material-icons">history</span>
           <span>History</span>
         </button>
-        <button class="tab-btn" @click="navigateTo('nutrition')">
+        <button v-if="nutritionVisible" class="tab-btn" @click="navigateTo('nutrition')">
           <span class="material-icons">restaurant</span>
           <span>Nutrition</span>
         </button>

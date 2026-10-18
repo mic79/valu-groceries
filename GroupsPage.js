@@ -1,6 +1,6 @@
 /**
  * Groups page: your lists (one Google Sheet each), creating and opening shared ones, per-group
- * settings (name, base currency, price tracking, fallback exchange rates), and the one-time
+ * settings (name, base currency, price tracking, Nutrition, fallback exchange rates), and the one-time
  * import from the old Nutri app.
  */
 
@@ -32,6 +32,7 @@ export default {
     const configGroupName = ref('');
     const configBaseCurrency = ref('USD');
     const configTrackPrices = ref(true);
+    const configTrackNutrition = ref(true);
     const configCurrencyRates = ref([]);
     const newRateCurrency = ref('');
     const newRateValue = ref('');
@@ -79,6 +80,7 @@ export default {
       configGroupName.value = '';
       configBaseCurrency.value = guessBaseCurrency();
       configTrackPrices.value = true;
+      configTrackNutrition.value = true;
       configCurrencyRates.value = [];
       newRateCurrency.value = ''; newRateValue.value = '';
       currencyDropdownOpen.value = false; currencySearch.value = '';
@@ -93,6 +95,7 @@ export default {
         const result = await SheetsApi.createSpreadsheet(name, props.userProfile?.email || '', {
           baseCurrency: configBaseCurrency.value,
           trackPrices: configTrackPrices.value ? 'true' : 'false',
+          trackNutrition: configTrackNutrition.value ? 'true' : 'false',
           currencyRates: configCurrencyRates.value.map((r) => `${r.currency}:${r.rate}`).join(','),
         });
         configIsNewGroup.value = false;
@@ -129,6 +132,7 @@ export default {
         configGroupName.value = s.groupName || groupNameFromTitle(group.name);
         configBaseCurrency.value = s.baseCurrency || 'USD';
         configTrackPrices.value = (s.trackPrices ?? 'true') !== 'false';
+        configTrackNutrition.value = (s.trackNutrition ?? 'true') !== 'false';
         configCurrencyRates.value = parseCurrencyRates(s.currencyRates).filter((r) => r.currency);
       } catch (err) {
         showAlert('Failed to load group configuration: ' + err.message);
@@ -168,6 +172,10 @@ export default {
     function toggleTrackPrices() {
       configTrackPrices.value = !configTrackPrices.value;
       saveConfigField('trackPrices', configTrackPrices.value ? 'true' : 'false');
+    }
+    function toggleTrackNutrition() {
+      configTrackNutrition.value = !configTrackNutrition.value;
+      saveConfigField('trackNutrition', configTrackNutrition.value ? 'true' : 'false');
     }
 
     function ratesToString() { return configCurrencyRates.value.map((r) => `${r.currency}:${r.rate}`).join(','); }
@@ -227,10 +235,10 @@ export default {
       creating, loading, importing, sortMode, toggleSortMode, displayGroups, formatDate, refreshGroups,
       groupNameFromTitle,
       showConfigSheet, configIsNewGroup, configGroupId, configSaving, configGroupName, configBaseCurrency,
-      configTrackPrices, configCurrencyRates, newRateCurrency, newRateValue, currencyDropdownOpen, currencySearch,
+      configTrackPrices, configTrackNutrition, configCurrencyRates, newRateCurrency, newRateValue, currencyDropdownOpen, currencySearch,
       filteredCurrencies, currencyName,
       openNewGroupFlow, submitNewGroup, openSharedSheet, openGroupConfig, saveConfigGroupName,
-      selectConfigBaseCurrency, toggleTrackPrices, addConfigCurrencyRate, removeConfigCurrencyRate,
+      selectConfigBaseCurrency, toggleTrackPrices, toggleTrackNutrition, addConfigCurrencyRate, removeConfigCurrencyRate,
       importFromOldNutri,
       switchGroup: (g) => emit('switch-group', g),
     };
@@ -361,6 +369,23 @@ export default {
               </div>
             </div>
 
+
+            <div class="card mb-16">
+              <div class="card-header"><h3>Nutrition</h3></div>
+              <div class="card-body" style="padding:0;">
+                <div class="list-item">
+                  <div class="list-item-content">
+                    <div class="list-item-title">Keep track of nutrition</div>
+                    <div class="list-item-subtitle">Calories, protein, carbs and fat of what this group buys. Off for everyone sharing this group.</div>
+                  </div>
+                  <label class="toggle">
+                    <input type="checkbox" :checked="configTrackNutrition" @change="toggleTrackNutrition" />
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
             <div class="card mb-16" v-if="configTrackPrices">
               <div class="card-header"><h3>Fallback Rates</h3></div>
               <div class="card-body">

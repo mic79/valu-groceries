@@ -7,7 +7,7 @@ export const DEFAULT_WIDGETS = [
   { id: 'list',      label: 'Shopping list',        icon: 'shopping_cart', hint: '' },
   { id: 'spending',  label: 'Spending per month',   icon: 'bar_chart',     hint: 'Needs price tracking' },
   { id: 'stats',     label: 'Shopping days and items', icon: 'insights',   hint: '' },
-  { id: 'nutrition', label: 'Nutrition',            icon: 'restaurant',    hint: '' },
+  { id: 'nutrition', label: 'Nutrition',            icon: 'restaurant',    hint: 'Needs Nutrition on for this group' },
   { id: 'byStore',   label: 'Spending per store',   icon: 'storefront',    hint: 'Needs price tracking' },
   { id: 'topItems',  label: 'Bought most often',    icon: 'star',          hint: '' },
 ];

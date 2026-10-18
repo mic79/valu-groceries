@@ -6,6 +6,7 @@ import { demoGroupMeta, getDemoSettings, DEMO_SHEET_ID } from './demoData.js';
 import { rowToStore, guessBaseCurrency } from './groceryLogic.js';
 import { SHEET_PREFIX, STORAGE_PREFIX } from './config.js';
 import { loadStartPage } from './startPage.js';
+import { groupNutritionOn, loadShowNutrition, saveShowNutrition } from './nutritionFlags.js';
 import ValuOrb from './valu.js';
 import { killValuAppLandingIntro } from './valu-landing-intro.js';
 import ShoppingPage from './ShoppingPage.js';
@@ -62,6 +63,14 @@ const app = createApp({
     const appInstalled = ref(isStandalone || !!localStorage.getItem(P + 'app_installed'));
     const canInstall = computed(() => !appInstalled.value);
     let deferredInstallPrompt = null;
+
+    const showNutritionPref = ref(loadShowNutrition());
+    const groupHasNutrition = computed(() => groupNutritionOn(groupSettings.value));
+    const nutritionVisible = computed(() => groupHasNutrition.value && showNutritionPref.value);
+    function setShowNutritionPref(on) {
+      showNutritionPref.value = saveShowNutrition(on);
+      if (!on && currentPage.value === 'nutrition') currentPage.value = 'home';
+    }
 
     const PAGE_MAP = {
       home: 'HomePage',
@@ -156,6 +165,10 @@ const app = createApp({
     let _navFromPopstate = false;
     function readHash() {
       const h = window.location.hash.replace('#', '');
+      if (h === 'nutrition' && !nutritionVisible.value) {
+        history.replaceState({ page: 'home' }, '', window.location.pathname + window.location.search);
+        return 'home';
+      }
       return PAGE_MAP[h] ? h : 'home';
     }
     watch(currentPage, (page) => {
@@ -180,11 +193,17 @@ const app = createApp({
       if (window.location.hash.replace('#', '')) return;
       const start = loadStartPage();
       if (start === 'home' || !PAGE_MAP[start]) return;
+      if (start === 'nutrition' && !nutritionVisible.value) return;
       history.replaceState({ page: start }, '', '#' + start);
       currentPage.value = start;
     });
 
+    watch(nutritionVisible, (on) => {
+      if (!on && currentPage.value === 'nutrition') currentPage.value = 'home';
+    });
+
     async function navigateTo(page, opts) {
+      if (page === 'nutrition' && !nutritionVisible.value) page = 'home';
       const allowedWithoutGroup = page === 'home' || page === 'groups' || page === 'settings' || page === 'faq' || page === 'about';
       if (!activeGroup.value && !allowedWithoutGroup) {
         currentPage.value = 'home';
@@ -641,7 +660,7 @@ const app = createApp({
       activeSheetId, activeGroupName, groupDisplayName, sideNavOpen, showGroupSwitcher,
       demoHomeCallout, demoNoticeDismissed,
       needsReconnect, reconnect, connect, swUpdateReady, applySwUpdate, canInstall, installApp,
-      navigateTo,
+      navigateTo, nutritionVisible, groupHasNutrition, showNutritionPref, setShowNutritionPref,
       onAuthChange, signOut,
       startQuickLookDemo, leaveDemoToSignIn,
       switchGroup, onGroupCreated, onSharedOpened,

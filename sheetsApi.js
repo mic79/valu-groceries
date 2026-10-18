@@ -38,6 +38,7 @@ const DEFAULT_SETTINGS = [
   ['groupName',    'My groceries'],
   ['baseCurrency', 'CAD'],
   ['trackPrices',  'true'],
+  ['trackNutrition', 'true'],
   ['currencyRates', ''],
   ['createdAt',    ''],
   ['createdBy',    ''],

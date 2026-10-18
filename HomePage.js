@@ -11,6 +11,7 @@ import {
 } from './groceryLogic.js';
 import { formatMonthLabel, formatMonthShort } from './dateLabels.js';
 import { loadLayout } from './homeLayout.js';
+import { nutritionVisible } from './nutritionFlags.js';
 import { rowToNutrition, nutritionLookup, nutritionStats, missingStaples } from './nutritionLogic.js';
 
 const { ref, computed, watch, onMounted } = Vue;
@@ -32,7 +33,8 @@ export default {
     const items = ref([]);
     const nutriEntries = ref([]);
     // The layout is chosen in Settings (kept on this device) and read each time Home opens.
-    const widgetOrder = computed(() => loadLayout().filter((w) => w.enabled));
+    const showNutri = computed(() => nutritionVisible(props.settings));
+    const widgetOrder = computed(() => loadLayout().filter((w) => w.enabled && (w.id !== 'nutrition' || showNutri.value)));
     const loading = ref(true);
     const loadError = ref('');
     const selectedMonth = ref(monthKey(localDateISO()));
@@ -126,7 +128,7 @@ export default {
       try {
         const [rows, nutriRows] = await Promise.all([
           SheetsApi.getTabData(sid, TABS.ITEMS),
-          SheetsApi.getTabData(sid, TABS.NUTRITION).catch(() => []),
+          showNutri.value ? SheetsApi.getTabData(sid, TABS.NUTRITION).catch(() => []) : Promise.resolve([]),
         ]);
         if (sid !== props.sheetId) return;
         items.value = rows.map(rowToItem).filter((i) => i.id && i.title.trim());

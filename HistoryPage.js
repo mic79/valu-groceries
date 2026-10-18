@@ -20,6 +20,7 @@ import {
 } from './groceryLogic.js';
 import { formatDayHeading, formatMonthLabel, formatDateLabel } from './dateLabels.js';
 import { rowToNutrition, readLookup, nutritionMeasure } from './nutritionLogic.js';
+import { groupNutritionOn } from './nutritionFlags.js';
 
 const { ref, reactive, computed, watch, inject, onMounted } = Vue;
 
@@ -101,6 +102,7 @@ export default {
 
     const baseCurrency = computed(() => props.settings?.baseCurrency || 'USD');
     const trackPrices = computed(() => (props.settings?.trackPrices ?? 'true') !== 'false');
+    const groupNutri = computed(() => groupNutritionOn(props.settings));
     const fmt = (n) => formatCurrency(n, baseCurrency.value);
     const today = () => localDateISO();
     const yesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return localDateISO(d); };
@@ -311,7 +313,7 @@ export default {
       try {
         const [rows, nutriRows] = await Promise.all([
           SheetsApi.getTabData(sid, TABS.ITEMS),
-          SheetsApi.getTabData(sid, TABS.NUTRITION).catch(() => []),
+          groupNutri.value ? SheetsApi.getTabData(sid, TABS.NUTRITION).catch(() => []) : Promise.resolve([]),
         ]);
         if (sid !== props.sheetId) return;
         items.value = rows.map(rowToItem).filter((i) => i.id && i.title.trim());

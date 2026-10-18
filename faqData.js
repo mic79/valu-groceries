@@ -108,7 +108,8 @@ export const FAQ_ENTRIES = [
       'Products that are not in that table appear under **Not counted yet**. Tap **Fill in** to get help from an AI assistant: pick the products, copy the request, paste it into ChatGPT, Gemini, Claude or whichever assistant you prefer, then paste its answer back. ' +
       'The answer is checked (impossible values are rejected, doubtful ones are flagged) before anything is saved. You can also add or correct any product by hand.\n\n' +
       'It is an estimate of what you **bought**, not of what you ate. Quantities count as grams or millilitres from 10 upwards; for small numbers like 4, give the product a weight per piece.\n\n' +
-      '**Privacy:** the app never sends your products anywhere. Only the names you choose go into the text you copy, and you decide where to paste it. Untick anything you would rather not share.',
+      '**Privacy:** the app never sends your products anywhere. Only the names you choose go into the text you copy, and you decide where to paste it. Untick anything you would rather not share.\n\n' +
+      'A group can turn Nutrition off under **Groups** (off for everyone sharing that sheet). When it is on, **Settings, Nutrition** on this device can hide the page, its Home widget and the start-page option; other people in the group still see it. History still uses the data for per-100 g prices when the group has Nutrition on.',
   },
   {
     id: 'nutri',

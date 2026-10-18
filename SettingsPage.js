@@ -8,10 +8,10 @@ const { ref, computed, onMounted, inject } = Vue;
 const P = STORAGE_PREFIX;
 
 export default {
-  props: ['groups', 'activeGroup'],
-  emits: ['go-home', 'navigate'],
+  props: ['groups', 'activeGroup', 'settings', 'groupHasNutrition', 'showNutritionPref'],
+  emits: ['go-home', 'navigate', 'set-show-nutrition'],
 
-  setup() {
+  setup(props, { emit }) {
     const THEME_OPTIONS = [
       { value: 'auto', label: 'System default' },
       { value: 'light', label: 'Light' },
@@ -51,8 +51,15 @@ export default {
       localStorage.setItem(P + 'number_format', numberFormat.value);
     }
     const startPage = ref(loadStartPage());
-    const startPageLabel = computed(() => (START_PAGES.find((p) => p.id === startPage.value) || START_PAGES[0]).label);
+    const startPageChoices = computed(() => START_PAGES.filter((p) => p.id !== 'nutrition' || (props.groupHasNutrition && props.showNutritionPref)));
+    const startPageLabel = computed(() => (startPageChoices.value.find((p) => p.id === startPage.value) || START_PAGES[0]).label);
     function pickStartPage(id) { startPage.value = saveStartPage(id); }
+    function toggleNutritionPref() {
+      const next = !props.showNutritionPref;
+      emit('set-show-nutrition', next);
+      if (!next && startPage.value === 'nutrition') pickStartPage('home');
+    }
+    const shownHomeWidgets = computed(() => homeWidgets.value.filter((w) => w.id !== 'nutrition' || (props.groupHasNutrition && props.showNutritionPref)));
     function saveDefaultGroup() {
       if (defaultGroupId.value) localStorage.setItem(P + 'default_group', defaultGroupId.value);
       else localStorage.removeItem(P + 'default_group');
@@ -90,7 +97,7 @@ export default {
     return {
       isSignedIn, forgetThisDevice, groupNameFromTitle, homeWidgets, toggleWidget, moveWidget,
       THEME_OPTIONS, NUMBER_FORMAT_OPTIONS, theme, numberFormat, defaultGroupId,
-      START_PAGES, startPage, startPageLabel, pickStartPage,
+      startPageChoices, startPage, startPageLabel, pickStartPage, toggleNutritionPref, shownHomeWidgets,
       openDropdown, toggleDropdown, saveTheme, saveNumberFormat, saveDefaultGroup,
     };
   },
@@ -184,7 +191,7 @@ export default {
                 <span class="material-icons form-dropdown-arrow">expand_more</span>
               </button>
               <div class="form-dropdown-list" v-if="openDropdown === 'startPage'">
-                <div v-for="p in START_PAGES" :key="p.id"
+                <div v-for="p in startPageChoices" :key="p.id"
                      class="form-dropdown-option" :class="{ selected: startPage === p.id }"
                      @click="pickStartPage(p.id); openDropdown = null">{{ p.label }}</div>
               </div>
@@ -194,10 +201,26 @@ export default {
             </p>
           </div>
         </div>
+        <div class="card mb-16" v-if="groupHasNutrition">
+          <div class="card-header"><h3>Nutrition</h3></div>
+          <div class="card-body" style="padding:0;">
+            <div class="list-item">
+              <div class="list-item-content">
+                <div class="list-item-title">Show Nutrition</div>
+                <div class="list-item-subtitle">The Nutrition page, its Home widget and the start-page option. Other people in this group still see it.</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" :checked="showNutritionPref" @change="toggleNutritionPref" />
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
+          </div>
+        </div>
         <div class="card mb-16">
           <div class="card-header"><h3><span class="material-icons" style="font-size:18px;vertical-align:text-bottom;margin-right:4px;">dashboard_customize</span>Home layout</h3></div>
           <div class="card-body" style="padding:0;">
-            <div v-for="(w, idx) in homeWidgets" :key="w.id" class="home-layout-item">
+            <div v-for="(w, idx) in shownHomeWidgets" :key="w.id" class="home-layout-item">
               <span class="material-icons home-layout-icon">{{ w.icon }}</span>
               <div class="home-layout-label">
                 <span>{{ w.label }}</span>
@@ -212,7 +235,7 @@ export default {
                 <button type="button" class="home-layout-arrow" :disabled="idx === 0" :aria-label="'Move ' + w.label + ' up'" @click="moveWidget(w.id, -1)">
                   <span class="material-icons">keyboard_arrow_up</span>
                 </button>
-                <button type="button" class="home-layout-arrow" :disabled="idx === homeWidgets.length - 1" :aria-label="'Move ' + w.label + ' down'" @click="moveWidget(w.id, 1)">
+                <button type="button" class="home-layout-arrow" :disabled="idx === shownHomeWidgets.length - 1" :aria-label="'Move ' + w.label + ' down'" @click="moveWidget(w.id, 1)">
                   <span class="material-icons">keyboard_arrow_down</span>
                 </button>
               </div>
@@ -230,7 +253,7 @@ export default {
               <span class="material-icons" style="font-size:18px;vertical-align:middle;margin-right:4px;">tune</span>Currency, price tracking and sharing
             </button>
             <p style="font-size:13px;color:var(--color-text-secondary);margin-top:8px;">
-              Base currency, fallback exchange rates and price tracking are set per group in Groups.
+              Base currency, fallback exchange rates, price tracking and Nutrition are set per group in Groups.
             </p>
           </div>
         </div>

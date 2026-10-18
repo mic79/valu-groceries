@@ -25,6 +25,7 @@ export function demoSettingsObject() {
     groupName: 'Demo',
     baseCurrency: 'CAD',
     trackPrices: 'true',
+    trackNutrition: 'true',
     currencyRates: 'EUR:1.48,USD:1.36',
     createdAt: '',
     createdBy: '',
