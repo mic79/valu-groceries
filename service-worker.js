@@ -52,6 +52,7 @@ const PRECACHE_URLS = [
   'nutritionLogic.js',
   'clipboard.js',
   'homeLayout.js',
+  'startPage.js',
   'HistoryPage.js',
   'HomePage.js',
   'ActivityPage.js',

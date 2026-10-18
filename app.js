@@ -5,6 +5,7 @@ import SheetsApi, { TABS, isDemoSheet, groupNameFromTitle } from './sheetsApi.js
 import { demoGroupMeta, getDemoSettings, DEMO_SHEET_ID } from './demoData.js';
 import { rowToStore, guessBaseCurrency } from './groceryLogic.js';
 import { SHEET_PREFIX, STORAGE_PREFIX } from './config.js';
+import { loadStartPage } from './startPage.js';
 import ValuOrb from './valu.js';
 import { killValuAppLandingIntro } from './valu-landing-intro.js';
 import ShoppingPage from './ShoppingPage.js';
@@ -169,6 +170,20 @@ const app = createApp({
       currentPage.value = readHash();
     });
 
+    // Start page: the first time a group is ready after the app is opened, go to the page chosen in Settings.
+    // A page named in the address (a link, a bookmark, a reload on that page) wins. The address is replaced, not
+    // added, so Back leaves the app instead of returning to the Dashboard.
+    let launchPending = true;
+    watch(activeGroup, (g) => {
+      if (!launchPending || !g) return;
+      launchPending = false;
+      if (window.location.hash.replace('#', '')) return;
+      const start = loadStartPage();
+      if (start === 'home' || !PAGE_MAP[start]) return;
+      history.replaceState({ page: start }, '', '#' + start);
+      currentPage.value = start;
+    });
+
     async function navigateTo(page, opts) {
       const allowedWithoutGroup = page === 'home' || page === 'groups' || page === 'settings' || page === 'faq' || page === 'about';
       if (!activeGroup.value && !allowedWithoutGroup) {
@@ -235,6 +250,7 @@ const app = createApp({
       showSignInFromLanding.value = false;
       currentPage.value = 'home';
       await applyDemoShellState();
+      currentPage.value = readHash(); // the group is ready, so any page named in the address can open
     }
     const startQuickLookDemo = startDemo;
 
@@ -575,7 +591,7 @@ const app = createApp({
     onMounted(() => {
       if (requestedDemo) {
         startDemo();
-        window.history.replaceState({}, '', window.location.pathname);
+        window.history.replaceState({}, '', window.location.pathname + window.location.hash);
       } else {
         setTimeout(() => { landingShowCtas.value = true; }, 2000);
       }

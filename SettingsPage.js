@@ -2,6 +2,7 @@ import GoogleAuth from './googleAuth.js';
 import { STORAGE_PREFIX } from './config.js';
 import { groupNameFromTitle } from './sheetsApi.js';
 import { loadLayout, saveLayout, moveWidget as moveInLayout } from './homeLayout.js';
+import { START_PAGES, loadStartPage, saveStartPage } from './startPage.js';
 
 const { ref, computed, onMounted, inject } = Vue;
 const P = STORAGE_PREFIX;
@@ -49,6 +50,9 @@ export default {
     function saveNumberFormat() {
       localStorage.setItem(P + 'number_format', numberFormat.value);
     }
+    const startPage = ref(loadStartPage());
+    const startPageLabel = computed(() => (START_PAGES.find((p) => p.id === startPage.value) || START_PAGES[0]).label);
+    function pickStartPage(id) { startPage.value = saveStartPage(id); }
     function saveDefaultGroup() {
       if (defaultGroupId.value) localStorage.setItem(P + 'default_group', defaultGroupId.value);
       else localStorage.removeItem(P + 'default_group');
@@ -86,6 +90,7 @@ export default {
     return {
       isSignedIn, forgetThisDevice, groupNameFromTitle, homeWidgets, toggleWidget, moveWidget,
       THEME_OPTIONS, NUMBER_FORMAT_OPTIONS, theme, numberFormat, defaultGroupId,
+      START_PAGES, startPage, startPageLabel, pickStartPage,
       openDropdown, toggleDropdown, saveTheme, saveNumberFormat, saveDefaultGroup,
     };
   },
@@ -170,6 +175,25 @@ export default {
           </div>
         </div>
 
+        <div class="card mb-16" @click="openDropdown = null">
+          <div class="card-header"><h3>Start page</h3></div>
+          <div class="card-body">
+            <div class="form-dropdown" @click.stop>
+              <button type="button" class="form-dropdown-trigger" @click="toggleDropdown('startPage')">
+                <span>{{ startPageLabel }}</span>
+                <span class="material-icons form-dropdown-arrow">expand_more</span>
+              </button>
+              <div class="form-dropdown-list" v-if="openDropdown === 'startPage'">
+                <div v-for="p in START_PAGES" :key="p.id"
+                     class="form-dropdown-option" :class="{ selected: startPage === p.id }"
+                     @click="pickStartPage(p.id); openDropdown = null">{{ p.label }}</div>
+              </div>
+            </div>
+            <p style="font-size:13px;color:var(--color-text-secondary);margin-top:8px;">
+              The page to show when you open the app. Kept on this device. A page you open from a link or bookmark is always shown as is.
+            </p>
+          </div>
+        </div>
         <div class="card mb-16">
           <div class="card-header"><h3><span class="material-icons" style="font-size:18px;vertical-align:text-bottom;margin-right:4px;">dashboard_customize</span>Home layout</h3></div>
           <div class="card-body" style="padding:0;">
