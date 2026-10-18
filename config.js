@@ -7,7 +7,7 @@
  */
 
 /** Google OAuth "Web application" client ID. */
-const CLIENT_ID = '399400088485-h2nrjmo500qj4s7qrvfaog2tsqet3huo.apps.googleusercontent.com';
+const CLIENT_ID = '399400088485-6ktk4a0h13k2cih3nhf4vkmcha2de7ut.apps.googleusercontent.com';
 
 /**
  * Browser API key used only by the Google Picker. Restrict it to "Websites" (HTTP referrers) and to
