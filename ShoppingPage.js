@@ -185,11 +185,16 @@ export default {
       }
     }
 
+    /** Set when Open list (or similar) asks for a specific store, so its tab can be scrolled into view once the strip renders. */
+    let scrollTabIntoView = false;
+    const tabsEl = ref(null);
+
     function restoreSelectedStore() {
       const intent = props.pageIntent;
       if (intent && Object.prototype.hasOwnProperty.call(intent, 'storeId')) {
         selectedStore.value = intent.storeId;
         try { localStorage.setItem(LS_STORE + props.sheetId, intent.storeId); } catch { /* private mode */ }
+        scrollTabIntoView = true;
         return;
       }
       let saved = null;
@@ -197,10 +202,25 @@ export default {
       selectedStore.value = saved;
     }
 
+    function scrollActiveStoreTabIntoView() {
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          const btn = tabsEl.value?.querySelector('.gl-store-tab.active');
+          if (btn && btn.scrollIntoView) btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        });
+      });
+    }
+
     watch(() => props.sheetId, () => { restoreSelectedStore(); items.value = []; fetchItems(); });
     watch(() => props.changeTick, () => {
       if (itemSheet.open || dragState || hasSelection.value || writesInFlight > 0) return;
       fetchItems(true);
+    });
+    watch(loading, (busy, wasBusy) => {
+      if (wasBusy && !busy && scrollTabIntoView) {
+        scrollTabIntoView = false;
+        scrollActiveStoreTabIntoView();
+      }
     });
 
     // ── Quick add ─────────────────────────────────────────────────────────────
@@ -690,7 +710,7 @@ export default {
 
     return {
       items, loading, loadError, fetchItems, trackPrices, baseCurrency, fmt, formatCurrency,
-      tabs, currentStoreId, currentStore, selectTab, activeStores,
+      tabs, tabsEl, currentStoreId, currentStore, selectTab, activeStores,
       pending, doneGroups, estimate, hasAnyPrice, isDoneOpen, toggleDone, formatDateLabel,
       storeNameOf, newTitle, inputFocused, quickInput, suggestions, quickAdd, listEl, leaving,
       toggleChecked, onRowOpen, startDrag,
@@ -738,7 +758,7 @@ export default {
       </div>
 
       <template v-else>
-        <div class="gl-store-tabs" v-if="activeStores.length > 0" role="tablist">
+        <div class="gl-store-tabs" v-if="activeStores.length > 0" ref="tabsEl" role="tablist">
           <button v-for="t in tabs" :key="t.id || '__none'" class="gl-store-tab" :class="{ active: t.id === currentStoreId }"
                   role="tab" :aria-selected="t.id === currentStoreId" @click="selectTab(t.id)">
             {{ t.name }}<span v-if="t.count > 0" class="gl-store-tab-count">{{ t.count }}</span>
