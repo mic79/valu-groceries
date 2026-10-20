@@ -17,7 +17,14 @@
 .vg-landing-product.valu-landing-tagline--visible { opacity: 1; transform: translateY(0); }
 
 /* ── Shopping page ─────────────────────────────────────────────────────────── */
-.gl-page { padding: 0; position: relative; min-height: 100%; display: flex; flex-direction: column; }
+.gl-page {
+  --gl-summary-h: 52px;
+  padding: 0;
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 /* The list is a sub-page (like Expenses in Valu Finance): fill the scroller so the bars stick to the bottom. */
 .subpage-scroll > .gl-page { flex: 1 0 auto; min-height: 0; }
 
@@ -83,6 +90,18 @@
   padding: 8px 20px 4px;
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+/* Pending-list header (count, total, trip / reorder / refresh) stays in view while you scroll. */
+.gl-page > .gl-summary {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: var(--gl-summary-h);
+  box-sizing: border-box;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background: var(--color-background);
+  box-shadow: 0 1px 0 var(--color-border);
 }
 .gl-summary-main { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .gl-summary-check { width: 36px; height: 36px; margin-left: -8px; }
@@ -204,16 +223,22 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  margin: 12px 0 8px;
-  padding: 6px 4px;
+  margin: 4px 0 8px;
+  padding: 10px 4px 8px;
   border: none;
-  background: none;
+  /* Solid fill so list rows do not show through while this day header is stuck. */
+  background: var(--color-background);
   font: inherit;
   color: var(--color-text-secondary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
+  /* Stick under the pending summary (same idea as Nutri's Bought day headers). */
+  position: sticky;
+  top: var(--gl-summary-h, 52px);
+  z-index: 3;
+  box-shadow: 0 1px 0 var(--color-border);
 }
 .gl-done-head .material-icons { font-size: 20px; transition: transform .2s; }
 .gl-done-head.open .material-icons { transform: rotate(180deg); }
