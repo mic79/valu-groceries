@@ -34,3 +34,12 @@ test('moving a widget swaps it with its neighbour and stops at the ends', () => 
   assert.deepEqual(ids(moveWidget(l, l[l.length - 1].id, 1)), ids(l));
   assert.deepEqual(ids(moveWidget(l, 'nope', 1)), ids(l));
 });
+
+test('the old per-store widget is folded into Spending', () => {
+  const bothOff = mergeLayout([{ id: 'spending', enabled: false }, { id: 'byStore', enabled: false }, { id: 'list', enabled: true }]);
+  assert.ok(!ids(bothOff).includes('byStore'));
+  assert.equal(bothOff.find((w) => w.id === 'spending').enabled, false);
+  const storeOn = mergeLayout([{ id: 'spending', enabled: false }, { id: 'byStore', enabled: true }]);
+  assert.equal(storeOn.find((w) => w.id === 'spending').enabled, true);
+  assert.ok(!ids(storeOn).includes('byStore'));
+});

@@ -527,21 +527,25 @@ export function spendingByMonth(items) {
 
 /** Spending per store in one month ('YYYY-MM'), biggest first. Items without a store are "Anywhere". */
 export function storeBreakdown(items, stores, month) {
-  const names = new Map(stores.map((s) => [s.id, s.name]));
+  const info = new Map(stores.map((s) => [s.id, { name: s.name, city: s.city || '' }]));
   const totals = new Map();
   for (const i of purchases(items)) {
     if (monthKey(i.checkedDate) !== month) continue;
-    const name = names.get(i.storeId) || (i.storeId ? 'Removed store' : 'Anywhere');
-    totals.set(name, (totals.get(name) || 0) + i.price);
+    const meta = info.get(i.storeId);
+    const name = meta?.name || (i.storeId ? 'Removed store' : 'Anywhere');
+    const cur = totals.get(name) || { name, city: meta?.city || '', total: 0 };
+    cur.total += i.price;
+    totals.set(name, cur);
   }
-  return [...totals.entries()].map(([name, total]) => ({ name, total: roundMoney(total) })).sort((a, b) => b.total - a.total);
+  return [...totals.values()].map((e) => ({ ...e, total: roundMoney(e.total) })).sort((a, b) => b.total - a.total);
 }
 
-/** Most often bought items: [{title, count, total}]. */
-export function topItems(items, limit = 8) {
+/** Most often bought items: [{title, count, total}]. Optional range {from, to} as YYYY-MM-DD. */
+export function topItems(items, limit = 8, range = null) {
   const map = new Map();
   for (const i of items) {
     if (!i.checkedDate || !i.title.trim()) continue;
+    if (range && !inRange(i.checkedDate, range)) continue;
     const key = i.title.trim().toLowerCase();
     const cur = map.get(key) || { title: i.title.trim(), count: 0, total: 0 };
     cur.count += 1;

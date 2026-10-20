@@ -248,6 +248,7 @@ export default {
           </div>
           <div class="activity-feed-body">
             <ul class="activity-feed-list">
+              <li><strong>One spending widget</strong> — Months and stores are together on Home: tap a month, see the projection and where you shopped. <strong>Bought most often</strong> can be this month, 12 months or all time.</li>
               <li><strong>Nutri dates match Finance</strong> — Imported purchases now use the same calendar day Nutri showed. If you already imported, run <strong>Import from Nutri</strong> once more; existing items are not duplicated, only the dates are corrected.</li>
               <li><strong>Same layout as Valu Finance</strong> — The home page is now your dashboard. Open the shopping list from the <strong>Groceries</strong> tab, next to Stores, History and Settings.</li>
               <li><strong>A much better History</strong> — Pick a year, month, day or date range, filter on several stores, sort, and switch to <strong>Products</strong> to see average prices and where each product is cheapest. Tap a purchase to correct it. Select several to change their date, move them, delete them or <strong>copy them to the clipboard</strong> with the fields you choose.</li>

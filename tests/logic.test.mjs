@@ -299,14 +299,17 @@ test('insights: monthly totals, store breakdown, top items', () => {
     { month: '2026-10', total: 15.5, count: 4 },
   ]);
   assert.deepEqual(storeBreakdown(items, stores, '2026-10'), [
-    { name: 'Costco', total: 7.5 },
-    { name: 'Metro', total: 5 },
-    { name: 'Anywhere', total: 2 },
-    { name: 'Removed store', total: 1 },
+    { name: 'Costco', city: '', total: 7.5 },
+    { name: 'Metro', city: '', total: 5 },
+    { name: 'Anywhere', city: '', total: 2 },
+    { name: 'Removed store', city: '', total: 1 },
   ]);
+  assert.equal(storeBreakdown(items, [{ id: 's2', name: 'Costco', city: 'Toronto' }], '2026-10')[0].city, 'Toronto');
   const top = topItems(items);
   assert.deepEqual(top[0], { title: 'Milk', count: 3, total: 22.5 });
   assert.ok(!top.some((t) => t.title === 'Pending'));
+  assert.equal(topItems(items, 8, { from: '2026-10-01', to: '2026-10-31' }).find((t) => t.title === 'Milk').count, 2);
+  assert.ok(!topItems(items, 8, { from: '2026-10-01', to: '2026-10-31' }).some((t) => t.title === 'Pending'));
 });
 
 test('estimateCurrentMonth projects from earlier months', () => {

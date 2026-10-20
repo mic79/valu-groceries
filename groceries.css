@@ -438,6 +438,66 @@ html[data-theme="dark"] .gl-quick { background: linear-gradient(rgba(33,31,29,0)
 .gl-hbar-track { height: 8px; border-radius: 4px; background: var(--color-primary-light); overflow: hidden; }
 .gl-hbar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #97B6B6, #729c9c); }
 
+.gl-spend { padding: 20px 18px 8px; }
+.gl-spend-hero { padding-bottom: 16px; }
+.gl-spend-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color-text-secondary); margin-bottom: 6px;
+}
+.gl-spend-amount { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.gl-spend-caption { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+.gl-spend-proj {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 12px 0; border-top: 1px solid var(--color-border); font-size: 14px; color: var(--color-text-secondary);
+}
+.gl-spend-proj strong { font-variant-numeric: tabular-nums; color: var(--color-text); }
+.gl-spend-trend { padding: 16px 0 8px; border-top: 1px solid var(--color-border); }
+.gl-spend-trend-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.gl-spend-trend-head h3 { font-size: 15px; font-weight: 700; }
+.gl-spend-trend-head span { font-size: 12px; color: var(--color-text-hint); }
+.gl-trend-row {
+  display: block; width: 100%; border: none; background: none; padding: 5px 0; font: inherit;
+  text-align: left; cursor: pointer; color: inherit;
+}
+.gl-trend-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 4px; }
+.gl-trend-meta span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
+.gl-trend-row.active .gl-trend-meta span:first-child { font-weight: 700; color: var(--color-primary-dark); }
+.gl-trend-track { display: block; height: 10px; border-radius: 5px; background: var(--color-primary-light); overflow: hidden; }
+.gl-trend-fill {
+  display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #97B6B6, #729c9c); opacity: .55;
+}
+.gl-trend-row.active .gl-trend-fill { opacity: 1; }
+.gl-trend-fill--est {
+  position: relative; overflow: hidden;
+  background: repeating-linear-gradient(135deg, rgba(151,182,182,.55) 0 4px, rgba(151,182,182,.2) 4px 8px);
+}
+.gl-trend-spent {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, #97B6B6, #729c9c);
+}
+.gl-spend-legend {
+  display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; font-size: 12px; color: var(--color-text-secondary);
+}
+.gl-spend-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.gl-spend-swatch { width: 10px; height: 10px; border-radius: 2px; background: #729c9c; }
+.gl-spend-swatch--est {
+  background: repeating-linear-gradient(135deg, rgba(151,182,182,.7) 0 3px, rgba(151,182,182,.25) 3px 6px);
+}
+.gl-spend-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 0 4px; }
+.gl-spend-chips--inline { padding: 0 0 8px; }
+.gl-spend-period-hint { font-size: 12px; color: var(--color-text-hint); margin: 0 0 8px; }
+.gl-spend-stores { padding: 16px 0 8px; border-top: 1px solid var(--color-border); }
+.gl-spend-stores-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.gl-spend-stores-head h3 { font-size: 15px; font-weight: 700; }
+.gl-spend-stores-head span { font-variant-numeric: tabular-nums; font-weight: 700; }
+.gl-spend-stores-sub { font-size: 12px; color: var(--color-text-hint); margin: 2px 0 10px; }
+.gl-spend-store { padding: 8px 0; }
+.gl-spend-store-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.gl-spend-store-top span:last-child { font-variant-numeric: tabular-nums; font-weight: 700; flex-shrink: 0; }
+.gl-spend-store-sub {
+  display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--color-text-hint); margin: 1px 0 6px;
+}
+
 .gl-chip-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 8px; }
 
 /* ── Stores ────────────────────────────────────────────────────────────────── */
