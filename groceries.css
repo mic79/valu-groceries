@@ -145,7 +145,6 @@
 }
 .gl-item:active { box-shadow: var(--shadow-md); }
 .gl-item--done { opacity: .62; }
-.gl-item--done .gl-item-title { text-decoration: line-through; text-decoration-color: var(--color-text-hint); }
 .gl-item--leaving { opacity: 0; transform: translateX(24px); }
 .gl-item--dragging {
   position: relative;
