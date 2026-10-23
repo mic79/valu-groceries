@@ -103,7 +103,8 @@ export default {
 
     const monthTotal = computed(() => monthly.value.find((m) => m.month === selectedMonth.value)?.total || 0);
     const isCurrentMonth = computed(() => selectedMonth.value === monthKey(localDateISO()));
-    const estimate = computed(() => (isCurrentMonth.value ? estimateCurrentMonth(monthly.value) : null));
+    /** Full-month projection for “this month” (shown in the legend under the bars, not tied to which month is selected). */
+    const monthEstimate = computed(() => estimateCurrentMonth(monthly.value));
     const spendEyebrow = computed(() => {
       const [y, m] = selectedMonth.value.split('-').map(Number);
       const monthName = new Intl.DateTimeFormat(undefined, { month: 'long' }).format(new Date(y, m - 1, 1));
@@ -214,7 +215,7 @@ export default {
 
     return {
       loading, loadError, load, openList, trackPrices, fmt, bars, selectedMonth, expandedMonth, toggleMonth,
-      monthTotal, estimate, isCurrentMonth, spendEyebrow, spendCaption, spendView, spendYears, setSpendView,
+      monthTotal, monthEstimate, isCurrentMonth, spendEyebrow, spendCaption, spendView, spendYears, setSpendView,
       hasEstimateBar, expandedStores, trips, perTrip, top, topPeriod, topMonthChip, topPeriodLabel, hasPurchases,
       nutri, widgetOrder, formatMonthLabel, toBuy, toBuyTotal, toBuyStores,
       monthItemCount: computed(() => monthPurchases.value.length),
@@ -267,10 +268,6 @@ export default {
               <div class="gl-spend-amount">{{ fmt(monthTotal) }}</div>
               <div class="gl-spend-caption">{{ spendCaption }}</div>
             </div>
-            <div v-if="estimate !== null" class="gl-spend-proj">
-              <span>Projected month total</span>
-              <strong>{{ fmt(estimate) }}</strong>
-            </div>
             <div class="gl-spend-trend">
               <div class="gl-spend-trend-head">
                 <h3>Monthly trend</h3>
@@ -306,9 +303,9 @@ export default {
                   </div>
                 </div>
               </div>
-              <div v-if="hasEstimateBar" class="gl-spend-legend">
+              <div v-if="hasEstimateBar && monthEstimate !== null" class="gl-spend-legend">
                 <span><i class="gl-spend-swatch"></i>Spent</span>
-                <span><i class="gl-spend-swatch gl-spend-swatch--est"></i>Projected portion</span>
+                <span><i class="gl-spend-swatch gl-spend-swatch--est"></i>Projected portion · {{ fmt(monthEstimate) }}</span>
               </div>
             </div>
           </div>
