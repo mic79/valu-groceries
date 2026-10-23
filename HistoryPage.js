@@ -116,16 +116,6 @@ export default {
 
     const purchases = computed(() => items.value.filter((i) => i.checkedDate));
 
-    // ── Stores in the filter (city shown, so two stores with the same name can be told apart) ──
-    const usedStores = computed(() => {
-      const counts = new Map();
-      for (const i of purchases.value) counts.set(effStore(i), (counts.get(effStore(i)) || 0) + 1);
-      const list = (props.stores || []).filter((s) => counts.has(s.id))
-        .map((s) => ({ id: s.id, name: s.name, city: s.city || '', count: counts.get(s.id) }))
-        .sort((a, b) => a.name.localeCompare(b.name) || a.city.localeCompare(b.city));
-      if (counts.has('')) list.push({ id: '__none', name: 'Anywhere', city: '', count: counts.get('') });
-      return list;
-    });
     const duplicateNames = computed(() => {
       const seen = new Map();
       for (const s of props.stores || []) seen.set(s.name.toLowerCase(), (seen.get(s.name.toLowerCase()) || 0) + 1);
@@ -147,6 +137,25 @@ export default {
 
     // ── Period ────────────────────────────────────────────────────────────────
     const range = computed(() => periodRange(period.kind, period.a, period.b));
+
+    /**
+     * Stores that actually appear in the current period (counts for that period). The picker only
+     * lists these — other stores are irrelevant until you change the period.
+     */
+    const periodStores = computed(() => {
+      const counts = new Map();
+      for (const i of purchases.value) {
+        if (!inRange(i.checkedDate, range.value)) continue;
+        const id = effStore(i);
+        counts.set(id, (counts.get(id) || 0) + 1);
+      }
+      const list = (props.stores || []).filter((s) => counts.has(s.id))
+        .map((s) => ({ id: s.id, name: s.name, city: s.city || '', count: counts.get(s.id) }))
+        .sort((a, b) => a.name.localeCompare(b.name) || a.city.localeCompare(b.city));
+      if (counts.has('')) list.push({ id: '__none', name: 'Anywhere', city: '', count: counts.get('') });
+      return list;
+    });
+    const periodStoreIds = computed(() => periodStores.value.map((s) => s.id));
     const periodLabel = computed(() => {
       if (period.kind === 'month') return formatMonthLabel(period.a);
       if (period.kind === 'year') return period.a;
@@ -217,42 +226,37 @@ export default {
       });
     });
 
-    /** Store ids that appear in the list right now (after period / search / store filters). */
-    const showingStoreIds = computed(() => {
-      const set = new Set();
-      for (const i of filtered.value) set.add(effStore(i) || '__none');
-      return set;
-    });
-
     /**
-     * When no store filter is set, every store on screen counts as checked. Unchecking one then
-     * narrows the filter to the other stores that were showing (so that store drops out of the list).
+     * Empty filter = every store in this period. Checkmarks stay put while you toggle; the row order
+     * does not reshuffle, so you can turn stores off and on without hunting for them again.
      */
     function storeFilterChecked(id) {
-      if (!storeFilter.value.length) return showingStoreIds.value.has(id);
+      if (!storeFilter.value.length) return true;
       return storeFilter.value.includes(id);
+    }
+
+    function setStoreFilter(ids) {
+      const all = periodStoreIds.value;
+      if (!ids.length || (ids.length === all.length && all.every((id) => ids.includes(id)))) {
+        storeFilter.value = [];
+        return;
+      }
+      storeFilter.value = ids;
     }
 
     function toggleStoreFilter(id) {
       if (!storeFilter.value.length) {
-        const base = [...showingStoreIds.value];
-        storeFilter.value = base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
+        setStoreFilter(periodStoreIds.value.filter((x) => x !== id));
         return;
       }
       const ids = storeFilter.value;
-      storeFilter.value = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
+      setStoreFilter(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
     }
 
-    /** Stores currently on screen first (checked), then the rest A–Z. */
+    /** Only stores with purchases in this period; A–Z (stable while toggles change). */
     const storeFilterOptions = computed(() => {
       const q = storeSearch.value.trim().toLowerCase();
-      const list = usedStores.value.filter((s) => !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
-      return list.slice().sort((a, b) => {
-        const aOn = storeFilterChecked(a.id) ? 0 : 1;
-        const bOn = storeFilterChecked(b.id) ? 0 : 1;
-        if (aOn !== bOn) return aOn - bOn;
-        return a.name.localeCompare(b.name) || a.city.localeCompare(b.city);
-      });
+      return periodStores.value.filter((s) => !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
     });
 
     const sorted = computed(() => sortPurchases(filtered.value, sortId.value, storeName));
@@ -292,6 +296,12 @@ export default {
     watch([() => period.kind, () => period.a, () => period.b, storeFilter, search, sortId, productSortId, view], () => {
       limit.value = PAGE_SIZE;
       expandedProduct.value = '';
+    });
+    // Drop store picks that no longer appear in the new period (or collapse back to “all”).
+    watch(periodStoreIds, (ids) => {
+      if (!storeFilter.value.length) return;
+      const allowed = new Set(ids);
+      setStoreFilter(storeFilter.value.filter((id) => allowed.has(id)));
     });
     watch(view, () => { if (view.value !== 'days') clearSelection(); });
 
@@ -550,7 +560,7 @@ export default {
       items, loading, loadError, load, period, periodLabel, periodOptions, allTimeTotal, setPeriod, openPeriodSheet, applyCustom,
       customFrom, customTo, search, view, sheets, storeSearch, storeFilter, storeFilterOptions, storeButtonLabel,
       storeFilterChecked, toggleStoreFilter,
-      usedStores, storeLabel, storeCity, hasFilters, clearFilters,
+      periodStores, storeLabel, storeCity, hasFilters, clearFilters,
       groups, shown, sorted, total, products: shownProducts, remaining, limit, PAGE_SIZE,
       sortOptions, activeSortId, pickSort, showUnit, unitNote, toggleProduct, expandedProduct, showPurchases,
       onRow, itemSheet, closeSheet, onSheetSave, addFromSheet, deleteFromSheet,
@@ -621,7 +631,7 @@ export default {
             <span class="material-icons" style="font-size:16px;">checklist</span>
             <span>Select</span>
           </button>
-          <button v-if="usedStores.length > 1" class="subpage-filter-btn" :class="{ active: storeFilter.length }" @click="sheets.store = true">
+          <button v-if="periodStores.length > 1" class="subpage-filter-btn" :class="{ active: storeFilter.length }" @click="sheets.store = true">
             <span class="material-icons" style="font-size:16px;">storefront</span>
             <span class="gl-hist-btn-label">{{ storeButtonLabel }}</span>
           </button>
