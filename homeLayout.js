@@ -5,7 +5,7 @@ export const LAYOUT_KEY = STORAGE_PREFIX + 'home_layout';
 
 export const DEFAULT_WIDGETS = [
   { id: 'list',      label: 'Shopping list',           icon: 'shopping_cart', hint: '' },
-  { id: 'spending',  label: 'Spending',                icon: 'bar_chart',     hint: 'Per month and per store. Needs price tracking' },
+  { id: 'spending',  label: 'Spending',                icon: 'bar_chart',     hint: 'Months with stores nested under each. Needs price tracking' },
   { id: 'stats',     label: 'Shopping days and items', icon: 'insights',      hint: '' },
   { id: 'nutrition', label: 'Nutrition',               icon: 'restaurant',    hint: 'Needs Nutrition on for this group' },
   { id: 'topItems',  label: 'Bought most often',       icon: 'star',          hint: '' },

@@ -1,7 +1,7 @@
 /**
- * Home (dashboard): a glance at the shopping list, spending (months and stores together), a projection
- * for the current month, and the items you buy most often. Works from the Items tab only. The shopping
- * list itself lives on the Groceries page (first tab in the bottom bar).
+ * Home (dashboard): a glance at the shopping list, spending (months with stores nested under each one),
+ * a projection for the current month, and the items you buy most often. Works from the Items tab only.
+ * The shopping list itself lives on the Groceries page (first tab in the bottom bar).
  */
 
 import SheetsApi, { TABS } from './sheetsApi.js';
@@ -38,6 +38,7 @@ export default {
     const loading = ref(true);
     const loadError = ref('');
     const selectedMonth = ref(monthKey(localDateISO()));
+    const expandedMonth = ref(null); // YYYY-MM whose store split is open under its bar (Nutri-style)
     const spendView = ref('12m'); // '12m' or a year 'YYYY'
     const topPeriod = ref('12m'); // 'month' | '12m' | 'all'
 
@@ -81,15 +82,23 @@ export default {
     });
     const hasEstimateBar = computed(() => bars.value.some((b) => b.estimate !== null));
 
+    function byMonthTotal(k) {
+      return monthly.value.find((m) => m.month === k)?.total || 0;
+    }
+
     function setSpendView(id) {
       spendView.value = id;
       if (!barKeys.value.includes(selectedMonth.value)) {
         const withSpend = [...barKeys.value].reverse().find((k) => (byMonthTotal(k) > 0));
         selectedMonth.value = withSpend || barKeys.value[barKeys.value.length - 1] || selectedMonth.value;
       }
+      if (expandedMonth.value && !barKeys.value.includes(expandedMonth.value)) expandedMonth.value = null;
     }
-    function byMonthTotal(k) {
-      return monthly.value.find((m) => m.month === k)?.total || 0;
+
+    /** Select the month for the hero / other widgets, and open or close its store split underneath. */
+    function toggleMonth(key) {
+      selectedMonth.value = key;
+      expandedMonth.value = expandedMonth.value === key ? null : key;
     }
 
     const monthTotal = computed(() => monthly.value.find((m) => m.month === selectedMonth.value)?.total || 0);
@@ -106,10 +115,12 @@ export default {
     const trips = computed(() => new Set(monthPurchases.value.map((i) => i.checkedDate)).size);
     const perTrip = computed(() => (trips.value ? roundMoney(monthTotal.value / trips.value) : 0));
 
-    const breakdown = computed(() => {
-      const rows = storeBreakdown(items.value, props.stores || [], selectedMonth.value);
-      const tot = monthTotal.value;
-      return rows.map((r) => {
+    /** Store split for the open month only (same idea as Nutri's getLocationTotals). */
+    const expandedStores = computed(() => {
+      const key = expandedMonth.value;
+      if (!key) return [];
+      const tot = byMonthTotal(key);
+      return storeBreakdown(items.value, props.stores || [], key).map((r) => {
         const share = tot > 0 ? Math.round((r.total / tot) * 100) : 0;
         return {
           ...r,
@@ -117,10 +128,6 @@ export default {
           shareLabel: share < 1 && r.total > 0 ? '<1%' : share + '%',
         };
       });
-    });
-    const storeCountLabel = computed(() => {
-      const n = breakdown.value.length;
-      return n + ' ' + (n === 1 ? 'store' : 'stores');
     });
 
     const months12 = computed(() => lastMonths(12));
@@ -206,10 +213,10 @@ export default {
     }
 
     return {
-      loading, loadError, load, openList, trackPrices, fmt, bars, selectedMonth, monthTotal, estimate, isCurrentMonth,
-      spendEyebrow, spendCaption, spendView, spendYears, setSpendView, hasEstimateBar,
-      trips, perTrip, breakdown, storeCountLabel, top, topPeriod, topMonthChip, topPeriodLabel, hasPurchases, nutri,
-      widgetOrder, formatMonthLabel, toBuy, toBuyTotal, toBuyStores,
+      loading, loadError, load, openList, trackPrices, fmt, bars, selectedMonth, expandedMonth, toggleMonth,
+      monthTotal, estimate, isCurrentMonth, spendEyebrow, spendCaption, spendView, spendYears, setSpendView,
+      hasEstimateBar, expandedStores, trips, perTrip, top, topPeriod, topMonthChip, topPeriodLabel, hasPurchases,
+      nutri, widgetOrder, formatMonthLabel, toBuy, toBuyTotal, toBuyStores,
       monthItemCount: computed(() => monthPurchases.value.length),
     };
   },
@@ -251,6 +258,10 @@ export default {
             <div class="banner-content">Price tracking is off for this group, so spending is not shown. Turn it on in Groups to see totals per month and store.</div>
           </div>
           <div v-else class="card mb-16 gl-spend">
+            <div class="gl-spend-chips" role="tablist" aria-label="Spending period">
+              <button type="button" class="gl-store-tab" :class="{ active: spendView === '12m' }" role="tab" :aria-selected="spendView === '12m'" @click="setSpendView('12m')">12 months</button>
+              <button v-for="y in spendYears" :key="y" type="button" class="gl-store-tab" :class="{ active: spendView === y }" role="tab" :aria-selected="spendView === y" @click="setSpendView(y)">{{ y }}</button>
+            </div>
             <div class="gl-spend-hero">
               <div class="gl-spend-eyebrow">{{ spendEyebrow }}</div>
               <div class="gl-spend-amount">{{ fmt(monthTotal) }}</div>
@@ -263,45 +274,41 @@ export default {
             <div class="gl-spend-trend">
               <div class="gl-spend-trend-head">
                 <h3>Monthly trend</h3>
-                <span>Tap a month</span>
+                <span>Tap a month for stores</span>
               </div>
-              <button v-for="b in bars" :key="b.key" type="button" class="gl-trend-row" :class="{ active: b.key === selectedMonth }"
-                      :aria-label="formatMonthLabel(b.key) + ': ' + fmt(b.total) + (b.estimate !== null ? ', estimated ' + fmt(b.estimate) : '')" @click="selectedMonth = b.key">
-                <span class="gl-trend-meta">
-                  <span>{{ b.label }}</span>
-                  <span>{{ fmt(b.total) }}</span>
-                </span>
-                <span class="gl-trend-track">
-                  <span class="gl-trend-fill" :class="{ 'gl-trend-fill--est': b.estimate !== null }" :style="{ width: b.width + '%' }">
-                    <span v-if="b.estimate !== null" class="gl-trend-spent" :style="{ width: b.spentPct + '%' }"></span>
+              <div v-for="b in bars" :key="b.key" class="gl-trend-block" :class="{ open: expandedMonth === b.key, active: b.key === selectedMonth }">
+                <button type="button" class="gl-trend-row"
+                        :aria-expanded="expandedMonth === b.key ? 'true' : 'false'"
+                        :aria-label="formatMonthLabel(b.key) + ': ' + fmt(b.total) + (b.estimate !== null ? ', estimated ' + fmt(b.estimate) : '') + (expandedMonth === b.key ? ', hide stores' : ', show stores')"
+                        @click="toggleMonth(b.key)">
+                  <span class="gl-trend-meta">
+                    <span class="gl-trend-label"><span class="material-icons gl-trend-chevron">{{ expandedMonth === b.key ? 'expand_less' : 'expand_more' }}</span>{{ b.label }}</span>
+                    <span>{{ fmt(b.total) }}</span>
                   </span>
-                </span>
-              </button>
+                  <span class="gl-trend-track">
+                    <span class="gl-trend-fill" :class="{ 'gl-trend-fill--est': b.estimate !== null }" :style="{ width: b.width + '%' }">
+                      <span v-if="b.estimate !== null" class="gl-trend-spent" :style="{ width: b.spentPct + '%' }"></span>
+                    </span>
+                  </span>
+                </button>
+                <div v-if="expandedMonth === b.key" class="gl-spend-stores gl-spend-stores--nested">
+                  <div v-if="expandedStores.length === 0" class="gl-spend-stores-empty">No priced purchases this month</div>
+                  <div v-for="r in expandedStores" :key="r.name" class="gl-spend-store">
+                    <div class="gl-spend-store-top">
+                      <span class="truncate">{{ r.name }}</span>
+                      <span>{{ fmt(r.total) }}</span>
+                    </div>
+                    <div class="gl-spend-store-sub">
+                      <span>{{ r.city }}</span>
+                      <span>{{ r.shareLabel }} of month</span>
+                    </div>
+                    <div class="gl-hbar-track"><div class="gl-hbar-fill" :style="{ width: r.barPct + '%' }"></div></div>
+                  </div>
+                </div>
+              </div>
               <div v-if="hasEstimateBar" class="gl-spend-legend">
                 <span><i class="gl-spend-swatch"></i>Spent</span>
                 <span><i class="gl-spend-swatch gl-spend-swatch--est"></i>Projected portion</span>
-              </div>
-            </div>
-            <div class="gl-spend-chips" role="tablist" aria-label="Spending period">
-              <button type="button" class="gl-store-tab" :class="{ active: spendView === '12m' }" role="tab" :aria-selected="spendView === '12m'" @click="setSpendView('12m')">12 months</button>
-              <button v-for="y in spendYears" :key="y" type="button" class="gl-store-tab" :class="{ active: spendView === y }" role="tab" :aria-selected="spendView === y" @click="setSpendView(y)">{{ y }}</button>
-            </div>
-            <div v-if="breakdown.length" class="gl-spend-stores">
-              <div class="gl-spend-stores-head">
-                <h3>Where you shopped</h3>
-                <span>{{ fmt(monthTotal) }}</span>
-              </div>
-              <div class="gl-spend-stores-sub">{{ formatMonthLabel(selectedMonth) }} · {{ storeCountLabel }}</div>
-              <div v-for="r in breakdown" :key="r.name" class="gl-spend-store">
-                <div class="gl-spend-store-top">
-                  <span class="truncate">{{ r.name }}</span>
-                  <span>{{ fmt(r.total) }}</span>
-                </div>
-                <div class="gl-spend-store-sub">
-                  <span>{{ r.city }}</span>
-                  <span>{{ r.shareLabel }} of month</span>
-                </div>
-                <div class="gl-hbar-track"><div class="gl-hbar-fill" :style="{ width: r.barPct + '%' }"></div></div>
               </div>
             </div>
           </div>
