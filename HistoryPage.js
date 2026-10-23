@@ -138,20 +138,12 @@ export default {
       const city = storeCity(id);
       return city && duplicateNames.value.has(name.toLowerCase()) ? name + ' · ' + city : name;
     }
-    const storeFilterOptions = computed(() => {
-      const q = storeSearch.value.trim().toLowerCase();
-      return usedStores.value.filter((s) => !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
-    });
     const storeButtonLabel = computed(() => {
       const ids = storeFilter.value;
       if (ids.length === 0) return 'Store';
       if (ids.length === 1) return ids[0] === '__none' ? 'Anywhere' : storeLabel(ids[0]);
       return ids.length + ' stores';
     });
-    function toggleStoreFilter(id) {
-      const ids = storeFilter.value;
-      storeFilter.value = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
-    }
 
     // ── Period ────────────────────────────────────────────────────────────────
     const range = computed(() => periodRange(period.kind, period.a, period.b));
@@ -224,6 +216,45 @@ export default {
           || storeName(sid).toLowerCase().includes(q) || storeCity(sid).toLowerCase().includes(q);
       });
     });
+
+    /** Store ids that appear in the list right now (after period / search / store filters). */
+    const showingStoreIds = computed(() => {
+      const set = new Set();
+      for (const i of filtered.value) set.add(effStore(i) || '__none');
+      return set;
+    });
+
+    /**
+     * When no store filter is set, every store on screen counts as checked. Unchecking one then
+     * narrows the filter to the other stores that were showing (so that store drops out of the list).
+     */
+    function storeFilterChecked(id) {
+      if (!storeFilter.value.length) return showingStoreIds.value.has(id);
+      return storeFilter.value.includes(id);
+    }
+
+    function toggleStoreFilter(id) {
+      if (!storeFilter.value.length) {
+        const base = [...showingStoreIds.value];
+        storeFilter.value = base.includes(id) ? base.filter((x) => x !== id) : [...base, id];
+        return;
+      }
+      const ids = storeFilter.value;
+      storeFilter.value = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
+    }
+
+    /** Stores currently on screen first (checked), then the rest A–Z. */
+    const storeFilterOptions = computed(() => {
+      const q = storeSearch.value.trim().toLowerCase();
+      const list = usedStores.value.filter((s) => !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
+      return list.slice().sort((a, b) => {
+        const aOn = storeFilterChecked(a.id) ? 0 : 1;
+        const bOn = storeFilterChecked(b.id) ? 0 : 1;
+        if (aOn !== bOn) return aOn - bOn;
+        return a.name.localeCompare(b.name) || a.city.localeCompare(b.city);
+      });
+    });
+
     const sorted = computed(() => sortPurchases(filtered.value, sortId.value, storeName));
     const grouped = computed(() => sortId.value === 'newest' || sortId.value === 'oldest');
     const shown = computed(() => sorted.value.slice(0, limit.value));
@@ -517,7 +548,8 @@ export default {
 
     return {
       items, loading, loadError, load, period, periodLabel, periodOptions, allTimeTotal, setPeriod, openPeriodSheet, applyCustom,
-      customFrom, customTo, search, view, sheets, storeSearch, storeFilter, storeFilterOptions, storeButtonLabel, toggleStoreFilter,
+      customFrom, customTo, search, view, sheets, storeSearch, storeFilter, storeFilterOptions, storeButtonLabel,
+      storeFilterChecked, toggleStoreFilter,
       usedStores, storeLabel, storeCity, hasFilters, clearFilters,
       groups, shown, sorted, total, products: shownProducts, remaining, limit, PAGE_SIZE,
       sortOptions, activeSortId, pickSort, showUnit, unitNote, toggleProduct, expandedProduct, showPurchases,
@@ -744,7 +776,7 @@ export default {
               <input v-model="storeSearch" placeholder="Search by name or city" />
             </div>
             <div v-for="s in storeFilterOptions" :key="s.id" class="month-picker-option gl-store-pick-row" @click="toggleStoreFilter(s.id)">
-              <span class="gl-check gl-check--square" :class="{ checked: storeFilter.includes(s.id) }" aria-hidden="true" style="margin-right:10px;">
+              <span class="gl-check gl-check--square" :class="{ checked: storeFilterChecked(s.id) }" aria-hidden="true" style="margin-right:10px;">
                 <span class="gl-check-circle"><span class="material-icons">check</span></span>
               </span>
               <span class="month-picker-label">{{ s.name }}<small v-if="s.city" style="color:var(--color-text-hint);"> · {{ s.city }}</small></span>
