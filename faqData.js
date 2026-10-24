@@ -23,9 +23,9 @@ export const FAQ_ENTRIES = [
     question: 'How do I add items and mark them as bought?',
     answer:
       'Type the item in the bar at the bottom and press enter. While you type, things you bought before are suggested. Products from **this store** come first, together with how you bought them there: the quantity and the price (for example "Eggs 12 $4.99", "Eggs 12 $5.49" and "Eggs 6 $2.99" are three rows, each different way is listed once). Tap one and the item is added with that quantity and price as an estimate. Products you only bought at other stores follow, marked with the store they came from, with no quantity and no price.\n\n' +
-      'Tap the square in front of an item to select it. The square above the list selects everything still to buy in that store. A bar appears at the bottom: **Bought** moves the selected items to **Bought today**, and **Date** lets you pick another day. With nothing selected, tap an item to change its quantity, store, price or notes.\n\n' +
-      'The quantity is a plain number, like "12" or "500": how many pieces, or how many grams or millilitres for things sold by weight or volume (write 1 kg as 1000). Keeping it a number lets other tools read it later, for example to work out nutrition. Nothing is calculated from it in this app; it just shows next to the name so you can recognise the right product in the shop. Type it in the small Qty box next to the name. Next to it is a small Price box (when prices are tracked): type the price in the store\'s currency and it is converted for you at a shop abroad. A price you type there replaces a suggested one.\n\n' +
-      'The slider icon next to the text box opens the full form when you want to add details straight away.',
+      'Tap the square in front of an item to select it. The square above the list selects everything still to buy in that store. A bar appears at the bottom: **Bought** moves the selected items to today\'s purchases, and **Date** lets you pick another day.\n\n' +
+      'With nothing selected, tap the **name**, **quantity** or **price** on a row to edit it directly (quantity sits next to the price). The **⋯** button opens the full form for store, notes, foreign currency and the rest. The quantity is a plain number, like "12" or "500" (write 1 kg as 1000). A price typed on the row is in the store\'s currency and is converted when needed.\n\n' +
+      'The slider icon next to the quick-add box opens the full form when you want to add details straight away.',
   },
   {
     id: 'stores',

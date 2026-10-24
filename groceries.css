@@ -185,7 +185,23 @@
 .gl-check--square .gl-check-circle { border-radius: 7px; }
 
 .gl-item-main { flex: 1; min-width: 0; }
-.gl-item-title { font-size: 1rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-item-title {
+  display: block; width: 100%; max-width: 100%;
+  font-size: 1rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: inherit; text-align: left;
+}
+.gl-item-title--btn {
+  border: none; background: none; padding: 0; margin: 0; font: inherit; cursor: text;
+  border-radius: 4px;
+}
+.gl-item-title--btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.gl-item-title-input {
+  display: block; width: 100%; box-sizing: border-box;
+  border: none; border-bottom: 1px solid var(--color-primary); border-radius: 0;
+  background: transparent; padding: 0 0 2px; margin: 0;
+  font: inherit; font-size: 1rem; font-weight: 600; color: var(--color-text);
+  outline: none;
+}
 .gl-item-sub {
   font-size: .8125rem;
   color: var(--color-text-secondary);
@@ -194,17 +210,69 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.gl-item-qty {
+/* Qty + price grouped on the right (Nutri-style). */
+.gl-item-metrics {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: 4px;
+}
+.gl-item-qty, .gl-item-qty-input, button.gl-item-qty {
+  flex-shrink: 0;
+  min-width: 44px;
+  max-width: 72px;
   font-size: 12px;
   font-weight: 700;
-  padding: 2px 9px;
+  padding: 4px 8px;
   border-radius: 10px;
   background: var(--color-primary-light);
   color: var(--color-primary);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.gl-item-price { flex-shrink: 0; font-size: .9375rem; font-variant-numeric: tabular-nums; color: var(--color-text); }
+button.gl-item-qty {
+  border: none; cursor: text; font: inherit; font-size: 12px; font-weight: 700;
+}
+.gl-item-qty--empty { opacity: .55; font-weight: 600; }
+.gl-item-qty-input {
+  border: 1px solid var(--color-primary);
+  outline: none;
+  box-sizing: border-box;
+}
+.gl-item-price {
+  flex-shrink: 0;
+  min-width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  font-size: .9375rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.gl-item-price-btn {
+  display: flex; flex-direction: column; align-items: flex-end;
+  border: none; background: none; padding: 0; margin: 0;
+  font: inherit; font-size: .9375rem; font-variant-numeric: tabular-nums;
+  color: inherit; cursor: text; border-radius: 4px; line-height: 1.2;
+}
+.gl-item-price-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.gl-item-price-input {
+  width: 72px; box-sizing: border-box;
+  border: none; border-bottom: 1px solid var(--color-primary); border-radius: 0;
+  background: transparent; padding: 0 0 2px; margin: 0;
+  font: inherit; font-size: .9375rem; font-variant-numeric: tabular-nums;
+  text-align: right; color: var(--color-text); outline: none;
+}
 .gl-item-price--none { color: var(--color-text-hint); }
+.gl-item-more { flex-shrink: 0; width: 32px; height: 32px; color: var(--color-text-hint); }
+.gl-item-more .material-icons { font-size: 20px; }
+.gl-item--editing { box-shadow: none; }
 .gl-drag-handle {
   flex-shrink: 0;
   display: inline-flex;
@@ -568,17 +636,13 @@ html[data-theme="dark"] .gl-quick { background: linear-gradient(rgba(33,31,29,0)
 .gl-store-city-head span { font-weight: 600; color: var(--color-text-hint); }
 .gl-store-select-bar { z-index: 6; }
 
-/* Small screens: keep the price column from squeezing titles */
 @media (max-width: 360px) {
-  .gl-item { gap: 8px; }
-  .gl-item-qty { display: none; }
+  .gl-item { gap: 6px; }
+  .gl-item-metrics { gap: 6px; }
+  .gl-item-qty, .gl-item-qty-input, button.gl-item-qty { min-width: 36px; max-width: 56px; padding: 4px 6px; }
+  .gl-item-price-input { width: 60px; }
 }
 
-/* ── Quantity, original-currency prices ───────────────────────────────────── */
-.gl-item-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.gl-item-head .gl-item-title { flex: 0 1 auto; min-width: 0; }
-.gl-item-head .gl-item-qty { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gl-item-price { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
 .gl-item-price-sub { font-size: 11px; color: var(--color-text-secondary); font-weight: 500; }
 
 /* ── Quick add: quantity (and price while recording a past purchase) ──────── */

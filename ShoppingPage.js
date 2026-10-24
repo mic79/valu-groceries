@@ -1,7 +1,7 @@
 /**
- * Shopping page (home): the live list per store, quick add with suggestions, tick off, reorder,
- * multi-select (move / delete), and the item sheet (price in a foreign currency is converted to the
- * group's base currency at entry time, exactly like Valu Finance).
+ * Shopping page: the live list per store, quick add with suggestions, tick off, reorder,
+ * multi-select (move / delete). Title, quantity and price edit inline on the row; the item sheet
+ * covers store, notes and FX details (price in a foreign currency is converted at entry time).
  */
 
 import SheetsApi, { TABS } from './sheetsApi.js';
@@ -15,43 +15,147 @@ import { formatDateLabel } from './dateLabels.js';
 import { STORAGE_PREFIX } from './config.js';
 import TripSheet from './TripSheet.js';
 import StoreSheet from './StoreSheet.js';
-import ItemSheet, { isZeroPrice } from './ItemSheet.js';
+import ItemSheet, { isZeroPrice, amountText } from './ItemSheet.js';
 
 const { ref, reactive, computed, watch, inject, nextTick, onMounted, onUnmounted } = Vue;
 
 const LS_STORE = STORAGE_PREFIX + 'store_';
 
-/** One row of the list. Used for both the open items and the ticked-off groups. */
+/**
+ * One row of the list (open items and ticked-off groups). Title, quantity and price edit inline
+ * (Nutri-style); the sheet icon opens the full form for store, notes, FX details, etc.
+ * Quantity sits next to price on the right.
+ */
 const GlItem = {
-  props: ['item', 'done', 'selected', 'reorder', 'showPrice', 'currency', 'leaving'],
-  emits: ['open', 'select', 'drag'],
-  setup(props) {
-    // The amount in the group's currency is what counts. If it was paid in another currency,
-    // the original amount (€3.50) is shown smaller underneath.
+  props: ['item', 'done', 'selected', 'reorder', 'showPrice', 'currency', 'storeCurrency', 'leaving', 'interactive'],
+  emits: ['open', 'select', 'drag', 'save'],
+  setup(props, { emit }) {
     const hasPaid = computed(() => !!props.item.paidAmount && !!props.item.paidCurrency && typeof props.item.price === 'number');
-    const priceText = computed(() => formatCurrency(typeof props.item.price === 'number' ? props.item.price : 0, props.currency));
+    const priceLabel = computed(() => (
+      typeof props.item.price === 'number' ? formatCurrency(props.item.price, props.currency) : ''
+    ));
     const priceSub = computed(() => (hasPaid.value ? formatCurrency(props.item.paidAmount, props.item.paidCurrency) : ''));
-    return { priceText, priceSub };
+    const draftTitle = ref('');
+    const draftQty = ref('');
+    const draftPrice = ref('');
+    const editing = ref(''); // 'title' | 'qty' | 'price' | ''
+    const titleInput = ref(null);
+    const qtyInput = ref(null);
+    const priceInput = ref(null);
+
+    function priceDraftFromItem() {
+      if (hasPaid.value) return amountText(props.item.paidAmount);
+      if (typeof props.item.price === 'number') return amountText(props.item.price);
+      return '';
+    }
+
+    function beginEdit(field) {
+      if (!props.interactive) return;
+      if (field === 'title') draftTitle.value = props.item.title || '';
+      if (field === 'qty') draftQty.value = props.item.quantity || '';
+      if (field === 'price') draftPrice.value = priceDraftFromItem();
+      editing.value = field;
+      nextTick(() => {
+        const el = field === 'title' ? titleInput.value : field === 'qty' ? qtyInput.value : priceInput.value;
+        if (el) { el.focus(); el.select?.(); }
+      });
+    }
+
+    function commitTitle() {
+      if (editing.value !== 'title') return;
+      editing.value = '';
+      const title = capitalizeFirst(draftTitle.value.trim());
+      if (!title || title === (props.item.title || '')) return;
+      emit('save', { item: props.item, patch: { title } });
+    }
+
+    function commitQty() {
+      if (editing.value !== 'qty') return;
+      editing.value = '';
+      const quantity = cleanQuantity(draftQty.value);
+      if (quantity === cleanQuantity(props.item.quantity || '')) return;
+      emit('save', { item: props.item, patch: { quantity } });
+    }
+
+    function commitPrice() {
+      if (editing.value !== 'price') return;
+      editing.value = '';
+      const text = String(draftPrice.value ?? '').trim();
+      const prev = priceDraftFromItem();
+      if (text === prev || (isZeroPrice(text) && typeof props.item.price !== 'number' && !hasPaid.value)) return;
+      emit('save', { item: props.item, patch: { priceText: text } });
+    }
+
+    function onRowClick() {
+      if (props.reorder) return;
+      if (!props.interactive) emit('select', props.item);
+    }
+
+    function onKey(field, e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.target.blur();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        editing.value = '';
+      }
+    }
+
+    return {
+      hasPaid, priceLabel, priceSub, draftTitle, draftQty, draftPrice, editing,
+      titleInput, qtyInput, priceInput, beginEdit, commitTitle, commitQty, commitPrice, onRowClick, onKey,
+      sanitizeQuantityText, sanitizeAmountText,
+    };
   },
   template: `
-    <div class="gl-item" :class="{ 'gl-item--done': done, 'gl-item--selected': selected, 'gl-item--leaving': leaving }"
-         :data-row-id="item.id" @click="$emit('open', item)">
+    <div class="gl-item" :class="{ 'gl-item--done': done, 'gl-item--selected': selected, 'gl-item--leaving': leaving, 'gl-item--editing': !!editing }"
+         :data-row-id="item.id" @click="onRowClick">
       <button type="button" class="gl-check gl-check--square" :class="{ checked: selected }" :disabled="reorder"
               role="checkbox" :aria-checked="!!selected" :aria-label="selected ? 'Deselect ' + item.title : 'Select ' + item.title"
               @click.stop="$emit('select', item)">
         <span class="gl-check-circle"><span class="material-icons">check</span></span>
       </button>
       <div class="gl-item-main">
-        <div class="gl-item-head">
-          <span class="gl-item-title">{{ item.title }}</span>
-          <span v-if="item.quantity" class="gl-item-qty">{{ item.quantity }}</span>
-        </div>
+        <input v-if="interactive && editing === 'title'" ref="titleInput" class="gl-item-title-input" type="text"
+               v-model="draftTitle" aria-label="Item name"
+               @click.stop @blur="commitTitle" @keydown="onKey('title', $event)" />
+        <button v-else-if="interactive" type="button" class="gl-item-title gl-item-title--btn truncate"
+                @click.stop="beginEdit('title')">{{ item.title }}</button>
+        <span v-else class="gl-item-title truncate">{{ item.title }}</span>
         <div v-if="item.notes" class="gl-item-sub">{{ item.notes }}</div>
       </div>
-      <span v-if="showPrice && priceText" class="gl-item-price">
-        {{ priceText }}
-        <small v-if="priceSub" class="gl-item-price-sub">{{ priceSub }}</small>
-      </span>
+      <div class="gl-item-metrics" @click.stop>
+        <template v-if="interactive">
+          <input v-if="editing === 'qty'" ref="qtyInput" class="gl-item-qty-input" type="text" inputmode="decimal"
+                 v-model="draftQty" aria-label="Quantity" placeholder="Qty"
+                 @input="draftQty = sanitizeQuantityText($event.target.value)"
+                 @blur="commitQty" @keydown="onKey('qty', $event)" />
+          <button v-else type="button" class="gl-item-qty" :class="{ 'gl-item-qty--empty': !item.quantity }"
+                  aria-label="Edit quantity" @click="beginEdit('qty')">{{ item.quantity || 'Qty' }}</button>
+          <div v-if="showPrice" class="gl-item-price">
+            <input v-if="editing === 'price'" ref="priceInput" class="gl-item-price-input" type="text" inputmode="decimal"
+                   v-model="draftPrice" aria-label="Price" placeholder="0"
+                   @input="draftPrice = sanitizeAmountText($event.target.value)"
+                   @blur="commitPrice" @keydown="onKey('price', $event)" />
+            <button v-else type="button" class="gl-item-price-btn" :class="{ 'gl-item-price--none': !priceLabel }"
+                    aria-label="Edit price" @click="beginEdit('price')">
+              <span>{{ priceLabel || '—' }}</span>
+              <small v-if="priceSub" class="gl-item-price-sub">{{ priceSub }}</small>
+            </button>
+          </div>
+        </template>
+        <template v-else>
+          <span v-if="item.quantity" class="gl-item-qty">{{ item.quantity }}</span>
+          <span v-if="showPrice" class="gl-item-price" :class="{ 'gl-item-price--none': !priceLabel }">
+            <span>{{ priceLabel || '—' }}</span>
+            <small v-if="priceSub" class="gl-item-price-sub">{{ priceSub }}</small>
+          </span>
+        </template>
+      </div>
+      <button v-if="interactive" type="button" class="gl-icon-btn gl-item-more" aria-label="More details"
+              title="Store, notes and more" @click.stop="$emit('open', item)">
+        <span class="material-icons">more_horiz</span>
+      </button>
       <span v-if="reorder && !done" class="gl-drag-handle" aria-label="Drag to reorder"
             @pointerdown.prevent="$emit('drag', $event, item)" @click.stop>
         <span class="material-icons">drag_handle</span>
@@ -430,8 +534,38 @@ export default {
     }
     function onRowOpen(item) {
       if (reorderMode.value) return;
-      if (hasSelection.value) { toggleSelect(item); return; }
       openEdit(item);
+    }
+
+    /** Inline title / qty / price from the row (Nutri-style). Price text is in the store's currency. */
+    async function onInlineSave({ item, patch }) {
+      if (!item || reorderMode.value || hasSelection.value) return;
+      if (patch.title !== undefined) {
+        const before = item.title;
+        item.title = patch.title;
+        persistItem(item, () => { item.title = before; });
+        return;
+      }
+      if (patch.quantity !== undefined) {
+        const before = item.quantity;
+        item.quantity = patch.quantity;
+        persistItem(item, () => { item.quantity = before; });
+        return;
+      }
+      if (patch.priceText !== undefined) {
+        const before = { price: item.price, paidAmount: item.paidAmount, paidCurrency: item.paidCurrency };
+        try {
+          const money = await resolvePrice(
+            patch.priceText,
+            storeCurrencyFor(item.storeId),
+            item.checkedDate || today(),
+          );
+          Object.assign(item, money);
+          persistItem(item, () => Object.assign(item, before));
+        } catch (e) {
+          showAlert(e.message);
+        }
+      }
     }
     const selectedItems = computed(() => items.value.filter((i) => selectedIds.value.includes(i.id)));
     /** Sum of the selected items' prices (in the group's currency); null when none of them has a price. */
@@ -713,7 +847,7 @@ export default {
       tabs, tabsEl, currentStoreId, currentStore, selectTab, activeStores,
       pending, doneGroups, estimate, hasAnyPrice, isDoneOpen, toggleDone, formatDateLabel,
       storeNameOf, newTitle, inputFocused, quickInput, suggestions, quickAdd, listEl, leaving,
-      toggleChecked, onRowOpen, startDrag,
+      toggleChecked, onRowOpen, onInlineSave, startDrag,
       reorderMode, toggleReorder, hasSelection, clearSelection, toggleSelect, allPendingSelected, somePendingSelected,
       selectedIds, selectedItems, selectedTotal, selectAll,
       checkOffSelected, deleteSelected, moveSelectedTo, showMoveSheet,
@@ -800,8 +934,10 @@ export default {
           <div class="gl-list" v-if="pending.length > 0">
             <div v-for="item in pending" :key="item.id" data-pending-row>
               <gl-item :item="item" :done="false" :selected="selectedIds.includes(item.id)"
-                       :reorder="reorderMode" :show-price="trackPrices" :currency="baseCurrency" :leaving="!!leaving[item.id]"
-                       @open="onRowOpen" @select="toggleSelect" @drag="startDrag" />
+                       :reorder="reorderMode" :interactive="!reorderMode && !hasSelection"
+                       :show-price="trackPrices" :currency="baseCurrency" :store-currency="storeCurrencyFor(item.storeId)"
+                       :leaving="!!leaving[item.id]"
+                       @open="onRowOpen" @select="toggleSelect" @drag="startDrag" @save="onInlineSave" />
             </div>
           </div>
           <div v-else-if="items.length > 0 && doneGroups.length > 0" class="empty-state gl-empty" style="padding-bottom:8px;">
@@ -823,8 +959,10 @@ export default {
             </button>
             <template v-if="isDoneOpen(g.date)">
               <gl-item v-for="item in g.items" :key="item.id" :item="item" :done="true" :selected="selectedIds.includes(item.id)"
-                       :reorder="false" :show-price="trackPrices" :currency="baseCurrency" :leaving="!!leaving[item.id]"
-                       @open="onRowOpen" @select="toggleSelect" />
+                       :reorder="false" :interactive="!hasSelection"
+                       :show-price="trackPrices" :currency="baseCurrency" :store-currency="storeCurrencyFor(item.storeId)"
+                       :leaving="!!leaving[item.id]"
+                       @open="onRowOpen" @select="toggleSelect" @save="onInlineSave" />
             </template>
           </div>
         </div>
