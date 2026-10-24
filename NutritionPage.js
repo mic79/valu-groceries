@@ -625,7 +625,7 @@ export default {
                 <label>{{ form.unit === 'piece' ? 'Grams per piece' : 'Grams per piece (optional)' }}</label>
                 <input v-model="form.gramsPerUnit" type="text" inputmode="decimal" :placeholder="form.unit === 'piece' ? 'e.g. 50' : 'e.g. 120'" />
               </div>
-              <p class="gl-sheet-hint">{{ form.unit === 'piece' ? 'A quantity of 12 on your list means 12 pieces.' : 'A quantity of 500 means 500 ' + form.unit + '. A small number like 4 is read as pieces when a piece weight is given.' }}</p>
+              <p class="gl-sheet-hint">{{ form.unit === 'piece' ? 'A quantity of 12 on your list means 12 pieces. A large number (50 or more) is read as grams — e.g. a 750 g tub — so pack weights are not multiplied by the piece weight.' : 'A quantity of 500 means 500 ' + form.unit + '. A small number like 4 is read as pieces when a piece weight is given.' }}</p>
               <p v-if="formEnergyLine" class="gl-sheet-hint"><strong>{{ formEnergyLine }}</strong></p>
             </template>
             <p v-else class="gl-sheet-hint">Non-food products are left out of all the numbers.</p>

@@ -68,6 +68,12 @@ test('quantity to grams: pieces, amounts and the ambiguous small numbers', () =>
   assert.equal(quantityToGrams('', egg), 50, 'no quantity = one piece');
   assert.equal(quantityToGrams('1,5', egg), 75);
   assert.equal(quantityToGrams('3', entry({ unit: 'piece', gramsPerUnit: 1 })), null, 'a piece without a weight is unknown');
+  const yogurt = entry({ unit: 'piece', gramsPerUnit: 100, kcal: 65 });
+  assert.equal(quantityToGrams('750', yogurt), 750, 'large qty on a piece row is pack weight in grams');
+  assert.equal(quantityToGrams('2', yogurt), 200, 'small count still means pieces');
+  const loaf = entry({ unit: 'piece', gramsPerUnit: 450, kcal: 247 });
+  assert.equal(quantityToGrams('500', loaf), 500);
+  assert.equal(quantityToGrams('1', loaf), 450);
   const milk = entry({ unit: 'ml', gramsPerUnit: 1 });
   assert.equal(quantityToGrams('2000', milk), 2000);
   assert.equal(quantityToGrams('2', milk), null, '2 could be litres: not guessed');
@@ -77,6 +83,15 @@ test('quantity to grams: pieces, amounts and the ambiguous small numbers', () =>
   assert.equal(quantityToGrams('500', tomato), 500);
   const n = purchaseNutrition({ quantity: '200' }, entry({ kcal: 50, protein: 2, carbs: 10, fat: 1 }));
   assert.deepEqual([n.grams, n.kcal, n.protein, n.carbs, n.fat], [200, 100, 4, 20, 2]);
+  assert.equal(Math.round(purchaseNutrition({ quantity: '750' }, yogurt).kcal), 488);
+});
+
+test('built-in bread is grams with a loaf weight, not piece × loaf', () => {
+  const bread = STAPLES.get(nutritionKey('whole wheat bread'));
+  assert.equal(bread.unit, 'g');
+  assert.equal(bread.gramsPerUnit, 450);
+  assert.equal(quantityToGrams('500', bread), 500);
+  assert.equal(quantityToGrams('1', bread), 450);
 });
 
 test('statistics: totals, shares, categories and an honest account of what was left out', () => {

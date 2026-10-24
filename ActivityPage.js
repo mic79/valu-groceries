@@ -248,6 +248,7 @@ export default {
           </div>
           <div class="activity-feed-body">
             <ul class="activity-feed-list">
+              <li><strong>Nutrition pack weights</strong> — A large quantity on a “piece” product (e.g. 750 g yogurt, 500 g bread) is counted as grams, not hundreds of pieces. Built-in bread staples use grams the same way.</li>
               <li><strong>One spending widget</strong> — Pick 12 months or a year at the top, then open a month to see where you shopped underneath (like Nutri). <strong>Bought most often</strong> can be this month, 12 months or all time.</li>
               <li><strong>Nutri dates match Finance</strong> — Imported purchases now use the same calendar day Nutri showed. If you already imported, run <strong>Import from Nutri</strong> once more; existing items are not duplicated, only the dates are corrected.</li>
               <li><strong>Same layout as Valu Finance</strong> — The home page is now your dashboard. Open the shopping list from the <strong>Groceries</strong> tab, next to Stores, History and Settings.</li>

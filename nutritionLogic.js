@@ -115,17 +115,24 @@ export function nutritionLookup(entries) {
 
 /**
  * How many grams a purchase is. The quantity of an item is a plain number, so the entry says how to read it:
- *   piece  the number counts pieces (eggs, a loaf): number x grams per piece. No quantity = one piece.
+ *   piece  a small count of pieces (eggs 12, croissants 4): number × grams per piece. No quantity = one piece.
+ *          A large number (50+) is treated as pack weight in grams — people often log "750" for a 750 g tub or
+ *          "500" for a loaf even when the nutrition row still says "piece".
  *   g / ml the number is the amount itself (1 ml counts as 1 g). A very small number (under 10) with a known
  *          piece weight is read as pieces ("Tomatoes 4"); without one it is ambiguous (litres? kilos?) and skipped.
  * Returns null when the amount cannot be known.
  */
+/** Quantity at or above this on a "piece" row is read as grams (tub / loaf / bag weight), not piece count. */
+export const PIECE_QTY_AS_GRAMS_FROM = 50;
+
 export function quantityToGrams(quantity, entry) {
   const q = parseFloat(String(quantity ?? '').replace(',', '.'));
   const hasQty = Number.isFinite(q) && q > 0;
   const gpu = entry.gramsPerUnit > 1 ? entry.gramsPerUnit : 0;
   if (entry.unit === 'piece') {
     if (!gpu) return null;
+    // 750 g yogurt tub, 500 g loaf: not 750×100 g or 500×450 g.
+    if (hasQty && q >= PIECE_QTY_AS_GRAMS_FROM) return q;
     return (hasQty ? q : 1) * gpu;
   }
   if (!hasQty) return null;
@@ -455,8 +462,8 @@ export function buildNutritionPrompt(names) {
     '- name: copy the product name exactly as written below, one row per product. If a name contains a comma, put the whole name in double quotes.',
     '- kcal, protein, carbs, fat: numbers per 100 g or 100 ml (protein, carbs and fat in grams). Use a dot as decimal separator and no units.',
     '- category: exactly one of: ' + NUTRITION_CATEGORIES.join(', ') + '.',
-    '- unit: g for things bought by weight, ml for liquids, piece for things that are counted (eggs, bananas, a loaf of bread).',
-    '- grams_per_unit: for piece, the typical weight in grams of one piece. For g or ml, the typical weight of one piece if it is usually counted (an apple, a tomato), otherwise 1.',
+    '- unit: g for things bought by weight (including yogurt tubs, loaves, bars and bags when the list quantity is grams), ml for liquids, piece only when the list quantity is a small count of whole items (eggs, croissants). Prefer g over piece for bread and produce when pack weight is what people type.',
+    '- grams_per_unit: for piece, the typical weight in grams of one piece. For g or ml, the typical weight of one piece if a small count is sometimes typed (an apple, a tomato, a loaf), otherwise 1.',
     '- Household and personal-care items (cleaning, paper, soap ...): category Non-food, all numbers 0, unit g, grams_per_unit 1.',
     '- If a name is ambiguous, pick the most common meaning. Give your best typical estimate; never leave numbers out for food.',
     '',
@@ -504,13 +511,13 @@ const STAPLE_ROWS = [
   ['feta', 264, 14, 4, 21, 'Dairy & eggs', 'g', 1], ['camembert|brie', 300, 20, 0.5, 24, 'Dairy & eggs', 'g', 1], ['cream cheese', 342, 6, 4, 34, 'Dairy & eggs', 'g', 1],
   ['yogurt|yoghurt|plain yogurt', 61, 3.5, 4.7, 3.3, 'Dairy & eggs', 'g', 1], ['greek yogurt|greek yoghurt', 97, 9, 3.9, 5, 'Dairy & eggs', 'g', 1],
   ['cream|heavy cream|whipping cream', 340, 2.1, 2.8, 36, 'Dairy & eggs', 'ml', 1], ['sour cream', 193, 2.4, 4.6, 19, 'Dairy & eggs', 'g', 1],
-  // Grains & bread
-  ['bread|toast|sandwich bread', 255, 9, 47, 3, 'Grains & bread', 'piece', 450], ['whole wheat bread|wholemeal bread|brown bread', 247, 13, 41, 3.4, 'Grains & bread', 'piece', 450],
-  ['baguette', 270, 9, 56, 1.2, 'Grains & bread', 'piece', 250], ['croissant', 406, 8.2, 45.8, 21, 'Grains & bread', 'piece', 60], ['bun|roll|bread roll|bagel', 280, 9, 53, 3, 'Grains & bread', 'piece', 70],
+  // Grains & bread — unit g with a loaf/piece weight so "1" means one loaf and "500" means 500 g (not 500 loaves).
+  ['bread|toast|sandwich bread', 255, 9, 47, 3, 'Grains & bread', 'g', 450], ['whole wheat bread|wholemeal bread|brown bread', 247, 13, 41, 3.4, 'Grains & bread', 'g', 450],
+  ['baguette', 270, 9, 56, 1.2, 'Grains & bread', 'g', 250], ['croissant', 406, 8.2, 45.8, 21, 'Grains & bread', 'g', 60], ['bun|roll|bread roll|bagel', 280, 9, 53, 3, 'Grains & bread', 'g', 70],
   ['rice|basmati rice|white rice|brown rice', 360, 7, 79, 0.6, 'Grains & bread', 'g', 1], ['pasta|spaghetti|penne|macaroni|noodle', 357, 12.5, 71, 1.5, 'Grains & bread', 'g', 1],
   ['oat|oats|rolled oats|oatmeal|porridge', 379, 13.2, 67.7, 6.5, 'Grains & bread', 'g', 1], ['cereal|granola|muesli|corn flakes', 380, 8, 80, 2.5, 'Grains & bread', 'g', 1],
   ['flour', 364, 10, 76, 1, 'Grains & bread', 'g', 1], ['couscous', 376, 12.8, 77, 0.6, 'Grains & bread', 'g', 1], ['quinoa', 368, 14, 64, 6, 'Grains & bread', 'g', 1],
-  ['tortilla|wrap', 310, 8, 52, 8, 'Grains & bread', 'piece', 40], ['cracker', 430, 9, 70, 12, 'Grains & bread', 'g', 1],
+  ['tortilla|wrap', 310, 8, 52, 8, 'Grains & bread', 'g', 40], ['cracker', 430, 9, 70, 12, 'Grains & bread', 'g', 1],
   // Legumes & nuts
   ['lentil', 352, 25, 63, 1.1, 'Legumes & nuts', 'g', 1], ['chickpea', 119, 7, 20, 2, 'Legumes & nuts', 'g', 1], ['beans|kidney beans|black beans|canned beans', 100, 6.5, 17, 0.5, 'Legumes & nuts', 'g', 1],
   ['tofu', 76, 8, 1.9, 4.8, 'Legumes & nuts', 'g', 1], ['almond', 579, 21, 22, 50, 'Legumes & nuts', 'g', 1], ['peanut', 567, 26, 16, 49, 'Legumes & nuts', 'g', 1],
@@ -596,6 +603,10 @@ export function nutritionMeasure(lookup) {
       return { basis: 'piece', amount: q ?? 1 };
     }
     if (entry.unit === 'piece') {
+      if (q !== null && q >= PIECE_QTY_AS_GRAMS_FROM) {
+        const m = { basis: 'g', amount: q };
+        return gpu ? { ...m, pieces: q / gpu } : m;
+      }
       const pieces = q ?? 1;
       return gpu ? { basis: 'piece', amount: pieces, grams: pieces * gpu } : { basis: 'piece', amount: pieces };
     }
