@@ -813,11 +813,11 @@ export default {
           <div class="gl-list" v-for="g in doneGroups" :key="g.date">
             <button class="gl-done-head" :class="{ open: isDoneOpen(g.date) }" @click="toggleDone(g.date)">
               <span class="gl-check gl-check--square" :class="{ checked: groupSelected(g) }" role="checkbox" tabindex="0"
-                    :aria-checked="groupSelected(g)" :aria-label="'Select everything bought ' + formatDateLabel(g.date)"
+                    :aria-checked="groupSelected(g)" :aria-label="'Select everything from ' + formatDateLabel(g.date)"
                     @click.stop="toggleGroupSelect(g)" @keydown.enter.stop.prevent="toggleGroupSelect(g)" @keydown.space.stop.prevent="toggleGroupSelect(g)">
                 <span class="gl-check-circle"><span class="material-icons">check</span></span>
               </span>
-              <span>Bought {{ formatDateLabel(g.date) }}</span>
+              <span>{{ formatDateLabel(g.date) }}</span>
               <span v-if="trackPrices && g.total !== 0" class="gl-done-head-total">{{ fmt(g.total) }}</span>
               <span class="material-icons" :style="trackPrices && g.total !== 0 ? '' : 'margin-left:auto'">expand_more</span>
             </button>

@@ -5,5 +5,5 @@
  * the label in the side menu.
  */
 (function (root) {
-  root.VALU_VERSION = 'v18';
+  root.VALU_VERSION = 'v19';
 })(typeof self !== 'undefined' ? self : this);
