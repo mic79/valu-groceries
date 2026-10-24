@@ -12,7 +12,7 @@ import {
 import { formatMonthLabel, formatMonthShort } from './dateLabels.js';
 import { loadLayout } from './homeLayout.js';
 import { nutritionVisible } from './nutritionFlags.js';
-import { rowToNutrition, nutritionLookup, nutritionStats, missingStaples } from './nutritionLogic.js';
+import { rowToNutrition, nutritionLookup, nutritionStats, missingStaples, daysInRange } from './nutritionLogic.js';
 
 const { ref, computed, watch, onMounted } = Vue;
 
@@ -114,7 +114,15 @@ export default {
 
     const monthPurchases = computed(() => items.value.filter((i) => i.checkedDate && monthKey(i.checkedDate) === selectedMonth.value));
     const trips = computed(() => new Set(monthPurchases.value.map((i) => i.checkedDate)).size);
-    const perTrip = computed(() => (trips.value ? roundMoney(monthTotal.value / trips.value) : 0));
+    /** Calendar days in the selected month (through today when it is the current month), not shopping days. */
+    const daysInMonth = computed(() => {
+      const [y, m] = selectedMonth.value.split('-').map(Number);
+      const last = new Date(y, m, 0).getDate();
+      const from = selectedMonth.value + '-01';
+      const to = selectedMonth.value + '-' + String(last).padStart(2, '0');
+      return daysInRange(from, to);
+    });
+    const perDay = computed(() => (daysInMonth.value ? roundMoney(monthTotal.value / daysInMonth.value) : 0));
 
     /** Store split for the open month only (same idea as Nutri's getLocationTotals). */
     const expandedStores = computed(() => {
@@ -216,7 +224,7 @@ export default {
     return {
       loading, loadError, load, openList, trackPrices, fmt, bars, selectedMonth, expandedMonth, toggleMonth,
       monthTotal, monthEstimate, isCurrentMonth, spendEyebrow, spendCaption, spendView, spendYears, setSpendView,
-      hasEstimateBar, expandedStores, trips, perTrip, top, topPeriod, topMonthChip, topPeriodLabel, hasPurchases,
+      hasEstimateBar, expandedStores, trips, perDay, top, topPeriod, topMonthChip, topPeriodLabel, hasPurchases,
       nutri, widgetOrder, formatMonthLabel, toBuy, toBuyTotal, toBuyStores,
       monthItemCount: computed(() => monthPurchases.value.length),
     };
@@ -315,7 +323,7 @@ export default {
           <div class="stats-row">
             <div class="stat"><div class="stat-value">{{ trips }}</div><div class="stat-label">Shopping days</div></div>
             <div class="stat"><div class="stat-value">{{ monthItemCount }}</div><div class="stat-label">Items bought</div></div>
-            <div v-if="trackPrices" class="stat"><div class="stat-value">{{ fmt(perTrip) }}</div><div class="stat-label">Per day</div></div>
+            <div v-if="trackPrices" class="stat"><div class="stat-value">{{ fmt(perDay) }}</div><div class="stat-label">Per day</div></div>
           </div>
         </div>
 
