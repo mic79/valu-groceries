@@ -3,7 +3,7 @@
  *
  *  - Period: all time, a year, a month, one day or a date range.
  *  - Filters: search (item, notes, store, city) and one or more stores.
- *  - Two views: by day (purchases) or by product (how often, average / lowest / highest price, cheapest store).
+ *  - Two views: by day (purchases) or by product (how often, total / average / lowest / highest price, cheapest store).
  *  - Tap a purchase to correct it (same sheet as on the list) or to put it on the list again.
  *  - Select: add to the list, change the date, move to a store, copy to the clipboard (you choose the fields) or delete.
  *
@@ -39,6 +39,7 @@ const SORTS = [
 const PRODUCT_SORTS = [
   { id: 'most', label: 'Bought most often', icon: 'repeat' },
   { id: 'recent', label: 'Bought most recently', icon: 'schedule' },
+  { id: 'total_desc', label: 'Total spent: high to low', icon: 'payments' },
   { id: 'avg_desc', label: 'Average price: high to low', icon: 'trending_down' },
   { id: 'name', label: 'Name A–Z', icon: 'sort_by_alpha' },
 ];
@@ -281,6 +282,7 @@ export default {
       const by = {
         most: (a, b) => b.count - a.count || a.title.localeCompare(b.title),
         recent: (a, b) => b.lastDate.localeCompare(a.lastDate) || a.title.localeCompare(b.title),
+        total_desc: (a, b) => (b.total ?? 0) - (a.total ?? 0) || a.title.localeCompare(b.title),
         avg_desc: (a, b) => (b.avg ?? -1) - (a.avg ?? -1) || a.title.localeCompare(b.title),
         name: (a, b) => a.title.localeCompare(b.title),
       }[productSortId.value];
@@ -684,7 +686,10 @@ export default {
               <div class="valu-list-body">
                 <div class="valu-list-top">
                   <div class="valu-list-name">{{ p.title }}<span class="gl-item-qty" style="margin-left:8px;vertical-align:1px;">{{ p.count }}×</span></div>
-                  <div v-if="trackPrices && p.avg !== null" class="valu-list-after">{{ fmt(p.avg) }}<small class="gl-item-price-sub" style="display:block;text-align:right;">average</small></div>
+                  <div v-if="trackPrices && p.avg !== null" class="gl-item-price">
+                    <span>{{ fmt(p.total) }}</span>
+                    <small class="gl-item-price-sub">avg {{ fmt(p.avg) }}</small>
+                  </div>
                 </div>
                 <div class="valu-list-sub">
                   Last {{ formatDateLabel(p.lastDate) }}<span v-if="trackPrices && p.min !== null && p.min !== p.max"> · {{ fmt(p.min) }} – {{ fmt(p.max) }}</span>
