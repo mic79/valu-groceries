@@ -659,8 +659,14 @@ export default {
                 </span>
                 <div class="valu-list-body">
                   <div class="valu-list-top">
-                    <div class="valu-list-name">{{ i.title }}<span v-if="i.quantity" class="gl-item-qty" style="margin-left:8px;vertical-align:1px;">{{ i.quantity }}</span></div>
-                    <div v-if="trackPrices" class="valu-list-after">{{ fmt(typeof i.price === 'number' ? i.price : 0) }}<small v-if="paidText(i)" class="gl-item-price-sub" style="display:block;text-align:right;">{{ paidText(i) }}</small></div>
+                    <div class="valu-list-name">{{ i.title }}</div>
+                    <div v-if="i.quantity || trackPrices" class="gl-item-metrics">
+                      <span v-if="i.quantity" class="gl-item-qty">{{ i.quantity }}</span>
+                      <span v-if="trackPrices" class="gl-item-price" :class="{ 'gl-item-price--none': typeof i.price !== 'number' }">
+                        <span>{{ typeof i.price === 'number' ? fmt(i.price) : '—' }}</span>
+                        <small v-if="paidText(i)" class="gl-item-price-sub">{{ paidText(i) }}</small>
+                      </span>
+                    </div>
                   </div>
                   <div class="valu-list-sub">
                     <template v-if="d.flat">{{ formatDateLabel(i.checkedDate) }} · </template>{{ storeLabel(i.storeId) }}<span v-if="i.notes"> · {{ i.notes }}</span>
