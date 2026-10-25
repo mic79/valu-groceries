@@ -69,7 +69,8 @@ export default {
         return k === currentKey && currentEstimate !== null ? Math.max(total, currentEstimate) : total;
       };
       const max = Math.max(1, ...keys.map(topOf));
-      return keys.map((k) => {
+      // Newest month first (same idea as Nutri's monthly list).
+      return keys.slice().reverse().map((k) => {
         const total = byKey.get(k)?.total || 0;
         const top = topOf(k);
         const est = k === currentKey && currentEstimate !== null && currentEstimate > total ? currentEstimate : null;
