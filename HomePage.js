@@ -40,7 +40,7 @@ export default {
     const selectedMonth = ref(monthKey(localDateISO()));
     const expandedMonth = ref(null); // YYYY-MM whose store split is open under its bar (Nutri-style)
     const spendView = ref('12m'); // '12m' or a year 'YYYY'
-    const topPeriod = ref('12m'); // 'month' | '12m' | 'all'
+    const topPeriod = ref('month'); // 'month' | '12m' | 'all'
 
     const baseCurrency = computed(() => props.settings?.baseCurrency || 'USD');
     const trackPrices = computed(() => (props.settings?.trackPrices ?? 'true') !== 'false');
