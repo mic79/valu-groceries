@@ -282,6 +282,10 @@ export default {
                 <h3>Monthly trend</h3>
                 <span>Tap a month for stores</span>
               </div>
+              <div v-if="hasEstimateBar && monthEstimate !== null" class="gl-spend-legend">
+                <span><i class="gl-spend-swatch"></i>Spent</span>
+                <span><i class="gl-spend-swatch gl-spend-swatch--est"></i>Projected portion · {{ fmt(monthEstimate) }}</span>
+              </div>
               <div v-for="b in bars" :key="b.key" class="gl-trend-block" :class="{ open: expandedMonth === b.key, active: b.key === selectedMonth }">
                 <button type="button" class="gl-trend-row"
                         :aria-expanded="expandedMonth === b.key ? 'true' : 'false'"
@@ -311,10 +315,6 @@ export default {
                     <div class="gl-hbar-track"><div class="gl-hbar-fill" :style="{ width: r.barPct + '%' }"></div></div>
                   </div>
                 </div>
-              </div>
-              <div v-if="hasEstimateBar && monthEstimate !== null" class="gl-spend-legend">
-                <span><i class="gl-spend-swatch"></i>Spent</span>
-                <span><i class="gl-spend-swatch gl-spend-swatch--est"></i>Projected portion · {{ fmt(monthEstimate) }}</span>
               </div>
             </div>
           </div>

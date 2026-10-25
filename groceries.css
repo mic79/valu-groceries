@@ -545,7 +545,7 @@ html[data-theme="dark"] .gl-quick { background: linear-gradient(rgba(33,31,29,0)
 }
 .gl-spend-proj strong { font-variant-numeric: tabular-nums; color: var(--color-text); }
 .gl-spend-trend { padding: 16px 0 8px; border-top: 1px solid var(--color-border); }
-.gl-spend-trend-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.gl-spend-trend-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
 .gl-spend-trend-head h3 { font-size: 15px; font-weight: 700; }
 .gl-spend-trend-head span { font-size: 12px; color: var(--color-text-hint); }
 .gl-trend-block { padding: 2px 0; }
@@ -574,7 +574,7 @@ html[data-theme="dark"] .gl-quick { background: linear-gradient(rgba(33,31,29,0)
   background: linear-gradient(90deg, #97B6B6, #729c9c);
 }
 .gl-spend-legend {
-  display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; font-size: 12px; color: var(--color-text-secondary);
+  display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 10px; font-size: 12px; color: var(--color-text-secondary);
 }
 .gl-spend-legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .gl-spend-swatch { width: 10px; height: 10px; border-radius: 2px; background: #729c9c; }
