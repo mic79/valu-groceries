@@ -879,7 +879,7 @@ export function moveToStore(list, storeId, { startOrder = 0, targetCurrency, bas
 const REGION_CURRENCY = {
   US: 'USD', CA: 'CAD', GB: 'GBP', AU: 'AUD', NZ: 'NZD', JP: 'JPY', CN: 'CNY', IN: 'INR', CH: 'CHF',
   SE: 'SEK', NO: 'NOK', DK: 'DKK', PL: 'PLN', CZ: 'CZK', HU: 'HUF', MX: 'MXN', BR: 'BRL', ZA: 'ZAR',
-  KR: 'KRW', SG: 'SGD', HK: 'HKD', TW: 'TWD', TR: 'TRY',
+  KR: 'KRW', SG: 'SGD', HK: 'HKD', TW: 'TWD', TR: 'TRY', MY: 'MYR', ID: 'IDR',
   DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', BE: 'EUR', AT: 'EUR', PT: 'EUR', IE: 'EUR',
   FI: 'EUR', GR: 'EUR', LU: 'EUR', SK: 'EUR', SI: 'EUR', EE: 'EUR', LV: 'EUR', LT: 'EUR', CY: 'EUR',
   MT: 'EUR', HR: 'EUR',
