@@ -7,7 +7,7 @@
 import SheetsApi, { TABS } from './sheetsApi.js';
 import {
   localDateISO, isFutureDate, parseAmount, roundMoney, sanitizeAmountText, flipSign, formatCurrency, cleanQuantity, sanitizeQuantityText,
-  capitalizeFirst, parseCurrencyRates, rowToItem, itemToRow, pendingItems, nextOrder, sumPrices,
+  capitalizeFirst, parseCurrencyRates, rowToItem, itemToRow, pendingItems, nextOrder, sumPrices, sumPaidAmounts,
   groupCheckedByDate, reorderList, buildSuggestions, copyForList, listKey, onListKeys, moveToStore,
 } from './groceryLogic.js';
 import { getRate } from './fxService.js';
@@ -236,6 +236,16 @@ export default {
     const pending = computed(() => pendingItems(items.value, currentStoreId.value));
     const doneGroups = computed(() => groupCheckedByDate(items.value, currentStoreId.value).slice(0, 14));
     const estimate = computed(() => sumPrices(pending.value));
+    /** Store currency when it differs from the base (for showing a foreign total next to the converted one). */
+    const foreignStoreCurrency = computed(() => {
+      const cur = storeCurrencyFor(currentStoreId.value);
+      return cur && cur !== baseCurrency.value ? cur : '';
+    });
+    const estimateForeign = computed(() => {
+      const cur = foreignStoreCurrency.value;
+      if (!cur || !pending.value.some((i) => i.paidCurrency === cur && typeof i.paidAmount === 'number')) return null;
+      return { amount: sumPaidAmounts(pending.value, cur), currency: cur };
+    });
     const hasAnyPrice = computed(() => pending.value.some((i) => typeof i.price === 'number'));
     const isDoneOpen = (date) => openDone[date] ?? date === today();
     const toggleDone = (date) => { openDone[date] = !isDoneOpen(date); };
@@ -571,6 +581,17 @@ export default {
     /** Sum of the selected items' prices (in the group's currency); null when none of them has a price. */
     const selectedTotal = computed(() => (trackPrices.value && selectedItems.value.some((i) => typeof i.price === 'number')
       ? sumPrices(selectedItems.value) : null));
+    const selectedForeignTotal = computed(() => {
+      const cur = foreignStoreCurrency.value;
+      if (!cur || !selectedItems.value.some((i) => i.paidCurrency === cur && typeof i.paidAmount === 'number')) return null;
+      return { amount: sumPaidAmounts(selectedItems.value, cur), currency: cur };
+    });
+    /** Foreign total for a list of items in the current store's currency, or null when none apply. */
+    function paidTotalLabel(list) {
+      const cur = foreignStoreCurrency.value;
+      if (!cur || !list.some((i) => i.paidCurrency === cur && typeof i.paidAmount === 'number')) return '';
+      return formatCurrency(sumPaidAmounts(list, cur), cur);
+    }
 
     const allPendingSelected = computed(() => pending.value.length > 0 && pending.value.every((i) => selectedIds.value.includes(i.id)));
     const somePendingSelected = computed(() => pending.value.some((i) => selectedIds.value.includes(i.id)));
@@ -845,11 +866,11 @@ export default {
     return {
       items, loading, loadError, fetchItems, trackPrices, baseCurrency, fmt, formatCurrency,
       tabs, tabsEl, currentStoreId, currentStore, selectTab, activeStores,
-      pending, doneGroups, estimate, hasAnyPrice, isDoneOpen, toggleDone, formatDateLabel,
+      pending, doneGroups, estimate, estimateForeign, foreignStoreCurrency, hasAnyPrice, isDoneOpen, toggleDone, formatDateLabel,
       storeNameOf, newTitle, inputFocused, quickInput, suggestions, quickAdd, listEl, leaving,
       toggleChecked, onRowOpen, onInlineSave, startDrag,
       reorderMode, toggleReorder, hasSelection, clearSelection, toggleSelect, allPendingSelected, somePendingSelected,
-      selectedIds, selectedItems, selectedTotal, selectAll,
+      selectedIds, selectedItems, selectedTotal, selectedForeignTotal, paidTotalLabel, selectAll,
       checkOffSelected, deleteSelected, moveSelectedTo, showMoveSheet,
       toggleGroupSelect, groupSelected, hasDoneSelected, hasPendingSelected, addAgain,
       showTripSheet, onTripAdd, showDateSheet, bulkDate, openDateSheet, applyBulkDate,
@@ -911,7 +932,7 @@ export default {
             <div>
               <template v-if="pending.length > 0">
                 {{ pending.length }} {{ pending.length === 1 ? 'item' : 'items' }}
-                <template v-if="trackPrices"> · <span class="gl-summary-total">{{ fmt(estimate) }}</span></template>
+                <template v-if="trackPrices"> · <span class="gl-summary-total">{{ fmt(estimate) }}<small v-if="estimateForeign" class="gl-summary-total-fx"> · {{ formatCurrency(estimateForeign.amount, estimateForeign.currency) }}</small></span></template>
               </template>
               <template v-else>Nothing to buy</template>
             </div>
@@ -954,7 +975,7 @@ export default {
                 <span class="gl-check-circle"><span class="material-icons">check</span></span>
               </span>
               <span>{{ formatDateLabel(g.date) }}</span>
-              <span v-if="trackPrices && g.total !== 0" class="gl-done-head-total">{{ fmt(g.total) }}</span>
+              <span v-if="trackPrices && g.total !== 0" class="gl-done-head-total">{{ fmt(g.total) }}<small v-if="paidTotalLabel(g.items)" class="gl-summary-total-fx"> · {{ paidTotalLabel(g.items) }}</small></span>
               <span class="material-icons" :style="trackPrices && g.total !== 0 ? '' : 'margin-left:auto'">expand_more</span>
             </button>
             <template v-if="isDoneOpen(g.date)">
@@ -970,7 +991,7 @@ export default {
         <!-- Bottom bars: quick add, select actions, or reorder hint -->
         <div v-if="hasSelection" class="gl-select-bar gl-select-bar--stack">
           <div class="gl-select-top">
-            <span class="gl-select-count">{{ selectedIds.length }} selected<template v-if="selectedTotal !== null"> · <strong>{{ fmt(selectedTotal) }}</strong></template></span>
+            <span class="gl-select-count">{{ selectedIds.length }} selected<template v-if="selectedTotal !== null"> · <strong>{{ fmt(selectedTotal) }}</strong><small v-if="selectedForeignTotal" class="gl-summary-total-fx"> · {{ formatCurrency(selectedForeignTotal.amount, selectedForeignTotal.currency) }}</small></template></span>
             <button class="gl-icon-btn" aria-label="Clear selection" @click="clearSelection"><span class="material-icons">close</span></button>
           </div>
           <div class="gl-select-actions">

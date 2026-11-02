@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   localDateISO, normalizeDate, dateFromEpochMs, isFutureDate, monthKey, parseAmount, roundMoney,
   sanitizeAmountText, flipSign, formatCurrency, cleanQuantity, sanitizeQuantityText, capitalizeFirst, parseCurrencyRates, textCell, rowToItem, itemToRow,
-  rowToStore, storeToRow, pendingItems, firstStoreWithPending, nextOrder, sumPrices, groupCheckedByDate, reorderList,
+  rowToStore, storeToRow, pendingItems, firstStoreWithPending, nextOrder, sumPrices, sumPaidAmounts, groupCheckedByDate, reorderList,
   buildSuggestions, lastPurchase, buildTrips, copyForList, onListKeys, listKey,
   spendingByMonth, storeBreakdown, topItems, estimateCurrentMonth,
   convertNutriRows, guessBaseCurrency, ITEM_HEADERS, STORE_HEADERS,
@@ -148,6 +148,14 @@ test('pending list: per store, ordered, ticked items excluded', () => {
 
 test('sums ignore missing prices; ticked items group by day, newest first', () => {
   assert.equal(sumPrices([item({ price: 1.1 }), item({ price: 2.2 }), item({ price: null })]), 3.3);
+  assert.equal(sumPaidAmounts([
+    item({ price: 10, paidAmount: 8, paidCurrency: 'EUR' }),
+    item({ price: 5, paidAmount: 4.5, paidCurrency: 'EUR' }),
+    item({ price: 3, paidAmount: 2, paidCurrency: 'GBP' }),
+    item({ price: 1 }),
+  ], 'EUR'), 12.5);
+  assert.equal(sumPaidAmounts([item({ paidAmount: 3, paidCurrency: 'EUR' })], 'USD'), 0);
+  assert.equal(sumPaidAmounts([item({ paidAmount: 3, paidCurrency: 'EUR' })], ''), 0);
   const items = [
     item({ id: 'a', storeId: 's1', checkedDate: '2026-10-01', price: 2 }),
     item({ id: 'b', storeId: 's1', checkedDate: '2026-10-03', price: 5 }),

@@ -109,6 +109,7 @@
 .gl-summary-check .material-icons { font-size: 14px; }
 .gl-check:disabled { opacity: .4; cursor: default; }
 .gl-summary-total { font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
+.gl-summary-total-fx { font-weight: 600; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
 .gl-summary-actions { display: flex; gap: 2px; }
 .gl-icon-btn {
   display: inline-flex;

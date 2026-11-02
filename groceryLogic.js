@@ -311,6 +311,15 @@ export function sumPrices(list) {
   return roundMoney(list.reduce((s, i) => s + (typeof i.price === 'number' ? i.price : 0), 0));
 }
 
+/** Sum of amounts paid in a given currency (items without that paid amount count as 0). */
+export function sumPaidAmounts(list, currency) {
+  const cur = String(currency || '').trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(cur)) return 0;
+  return roundMoney(list.reduce((s, i) => (
+    i.paidCurrency === cur && typeof i.paidAmount === 'number' ? s + i.paidAmount : s
+  ), 0));
+}
+
 /** Checked-off items of a store grouped by day, newest day first. */
 export function groupCheckedByDate(items, storeId, limitDays = Infinity) {
   const byDate = new Map();
