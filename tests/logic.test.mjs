@@ -5,7 +5,7 @@ import {
   localDateISO, normalizeDate, dateFromEpochMs, isFutureDate, monthKey, parseAmount, roundMoney,
   sanitizeAmountText, flipSign, formatCurrency, cleanQuantity, sanitizeQuantityText, capitalizeFirst, parseCurrencyRates, textCell, rowToItem, itemToRow,
   rowToStore, storeToRow, pendingItems, firstStoreWithPending, nextOrder, sumPrices, sumPaidAmounts, groupCheckedByDate, reorderList,
-  buildSuggestions, lastPurchase, buildTrips, copyForList, onListKeys, listKey,
+  buildSuggestions, lastPurchase, buildTrips, copyForList, partitionForList, onListKeys, listKey,
   spendingByMonth, storeBreakdown, topItems, estimateCurrentMonth,
   convertNutriRows, guessBaseCurrency, ITEM_HEADERS, STORE_HEADERS,
 } from '../groceryLogic.js';
@@ -289,6 +289,15 @@ test('buying again: price only carries over inside the same store', () => {
   assert.equal(keys.has(listKey({ title: 'milk', storeId: 's1' })), true);
   assert.equal(keys.has(listKey({ title: 'milk', storeId: 's2' })), false);
   assert.equal(keys.has(listKey({ title: 'Done', storeId: 's1' })), false, 'bought items are not on the list');
+  const onList = [item({ title: 'Milk', storeId: 's1' })];
+  const parts = partitionForList([
+    { title: 'Eggs', storeId: 's1' },
+    { title: 'Milk', storeId: 's1' },
+    { title: 'Milk', storeId: 's2' },
+    { title: 'Eggs', storeId: 's1' },
+  ], onList);
+  assert.deepEqual(parts.fresh.map((s) => s.title + '|' + s.storeId), ['Eggs|s1', 'Milk|s2']);
+  assert.deepEqual(parts.dupes.map((s) => s.title + '|' + s.storeId), ['Milk|s1', 'Eggs|s1']);
 });
 
 test('insights: monthly totals, store breakdown, top items', () => {

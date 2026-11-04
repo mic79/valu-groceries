@@ -478,6 +478,23 @@ export function onListKeys(items) {
 export const listKey = (item) => (item.storeId || '') + '|' + norm(item.title);
 
 /**
+ * Split specs for "add to list again" into ones that are new and ones that match something
+ * already to buy at that store (same title). Within the same batch, a second identical title
+ * also counts as a duplicate.
+ */
+export function partitionForList(specs, items) {
+  const seen = new Set(onListKeys(items));
+  const fresh = [];
+  const dupes = [];
+  for (const s of specs) {
+    const k = listKey(s);
+    if (seen.has(k)) dupes.push(s);
+    else { seen.add(k); fresh.push(s); }
+  }
+  return { fresh, dupes };
+}
+
+/**
  * Past shopping trips (one per day and store), newest first. `storeId` filters to one store
  * (use '*' or undefined for all); `query` filters by title/quantity/notes.
  */

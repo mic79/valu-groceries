@@ -2,7 +2,8 @@
  * "Add from a previous trip": pick a whole shopping day, several days, or single items from what
  * you bought before and put them on the list again. Quantity and notes come along; the old price
  * only comes along (as an estimate) when the item stays in the same store, because another store
- * may charge in another currency. Items already on the list are marked and cannot be picked twice.
+ * may charge in another currency. Items already on the list are marked; you can still pick them
+ * and choose to add again when confirming.
  */
 
 import { buildTrips, copyForList, listKey, onListKeys, formatCurrency } from './groceryLogic.js';
@@ -60,26 +61,22 @@ export default {
     const isOnList = (i) => onList.value.has(listKey({ title: i.title, storeId: destFor(i) }));
 
     function toggleItem(i) {
-      if (isOnList(i)) return;
       const s = new Set(selected.value);
       if (s.has(i.id)) s.delete(i.id); else s.add(i.id);
       selected.value = s;
     }
-    const pickable = (t) => t.items.filter((i) => !isOnList(i));
     const tripState = (t) => {
-      const p = pickable(t);
-      if (!p.length) return 'none';
-      const n = p.filter((i) => selected.value.has(i.id)).length;
-      return n === 0 ? 'off' : n === p.length ? 'all' : 'some';
+      if (!t.items.length) return 'none';
+      const n = t.items.filter((i) => selected.value.has(i.id)).length;
+      return n === 0 ? 'off' : n === t.items.length ? 'all' : 'some';
     };
     function toggleTrip(t) {
-      const p = pickable(t);
       const s = new Set(selected.value);
-      if (tripState(t) === 'all') p.forEach((i) => s.delete(i.id)); else p.forEach((i) => s.add(i.id));
+      if (tripState(t) === 'all') t.items.forEach((i) => s.delete(i.id)); else t.items.forEach((i) => s.add(i.id));
       selected.value = s;
     }
 
-    const chosen = computed(() => (props.items || []).filter((i) => selected.value.has(i.id) && !isOnList(i)));
+    const chosen = computed(() => (props.items || []).filter((i) => selected.value.has(i.id)));
     const mixedStores = computed(() => !!props.currentStoreId && chosen.value.some((i) => (i.storeId || '') !== props.currentStoreId));
 
     function add() {
@@ -145,7 +142,7 @@ export default {
             </div>
             <div v-if="isOpen(t, idx)" class="gl-trip-items">
               <div v-for="i in t.items" :key="i.id" class="gl-trip-row" :class="{ 'gl-trip-row--on': isOnList(i) }" @click="toggleItem(i)">
-                <button type="button" class="gl-check gl-check--square" :class="{ checked: selected.has(i.id) }" :disabled="isOnList(i)" :aria-label="'Select ' + i.title">
+                <button type="button" class="gl-check gl-check--square" :class="{ checked: selected.has(i.id) }" :aria-label="'Select ' + i.title">
                   <span class="gl-check-circle"><span class="material-icons">check</span></span>
                 </button>
                 <span class="gl-trip-name">{{ i.title }}</span>

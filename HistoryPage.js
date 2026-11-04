@@ -15,7 +15,7 @@ import ItemSheet, { amountText } from './ItemSheet.js';
 import { STORAGE_PREFIX } from './config.js';
 import { copyText } from './clipboard.js';
 import {
-  formatCurrency, rowToItem, itemToRow, nextOrder, sumPrices, monthKey, localDateISO, isFutureDate, copyForList, listKey, onListKeys,
+  formatCurrency, rowToItem, itemToRow, nextOrder, sumPrices, monthKey, localDateISO, isFutureDate, copyForList, partitionForList,
   periodRange, inRange, sortPurchases, productStats, COPY_FIELDS, itemsToText, moveToStore,
 } from './groceryLogic.js';
 import { formatDayHeading, formatMonthLabel, formatDateLabel } from './dateLabels.js';
@@ -399,18 +399,31 @@ export default {
       if (backOnList) say('"' + item.title + '" is back on your list');
     }
 
-    /** Puts copies of the given purchases on the shopping list (skipping what is already on it). */
-    function addToList(chosen) {
+    /** Puts copies of the given purchases on the shopping list; asks before adding a title that is already there. */
+    async function addToList(chosen) {
       const all = items.value;
-      const keys = onListKeys(all);
+      const specs = chosen.map((src) => {
+        const storeId = storeById.value.has(src.storeId) ? src.storeId : '';
+        return copyForList(src, { storeId, keepPrice: trackPrices.value });
+      });
+      const { fresh: newOnes, dupes } = partitionForList(specs, all);
+      let toAdd = newOnes;
+      if (dupes.length) {
+        const one = dupes.length === 1;
+        const title = one ? '"' + dupes[0].title + '"' : dupes.length + ' items';
+        const msg = newOnes.length
+          ? (one ? title + ' is' : title + ' are') + ' already on your list. Add '
+            + (one ? 'it' : 'them') + ' again anyway? The other '
+            + newOnes.length + (newOnes.length === 1 ? ' item' : ' items') + ' will be added either way.'
+          : (one ? title + ' is' : title + ' are') + ' already on your list. Add '
+            + (one ? 'it' : 'them') + ' again anyway?';
+        if (await showConfirm(msg, { confirmLabel: 'Add anyway' })) toAdd = [...newOnes, ...dupes];
+        else if (!newOnes.length) return;
+      }
       const nextBy = {};
       const fresh = [];
-      let skipped = 0;
-      for (const src of chosen) {
-        const storeId = storeById.value.has(src.storeId) ? src.storeId : '';
-        const spec = copyForList(src, { storeId, keepPrice: trackPrices.value });
-        if (keys.has(listKey(spec))) { skipped++; continue; }
-        keys.add(listKey(spec));
+      for (const spec of toAdd) {
+        const storeId = spec.storeId || '';
         if (nextBy[storeId] === undefined) nextBy[storeId] = nextOrder(all, storeId);
         fresh.push({ ...spec, id: SheetsApi.generateId(), order: nextBy[storeId]++, checkedDate: '', createdAt: new Date().toISOString() });
       }
@@ -420,15 +433,13 @@ export default {
           items.value = items.value.filter((i) => !fresh.includes(i));
           showAlert('Could not add them to your list. Check your connection and try again.');
         });
+        say('Added ' + fresh.length + (fresh.length === 1 ? ' item' : ' items') + ' to your list');
       }
-      say(fresh.length
-        ? 'Added ' + fresh.length + (fresh.length === 1 ? ' item' : ' items') + ' to your list' + (skipped ? ' · ' + skipped + ' already there' : '')
-        : (chosen.length === 1 ? 'Already on your list' : 'Everything was already on your list'));
     }
-    function addFromSheet(id) {
+    async function addFromSheet(id) {
       const item = items.value.find((i) => i.id === id);
       closeSheet();
-      if (item) addToList([item]);
+      if (item) await addToList([item]);
     }
 
     async function deleteItems(list) {
@@ -474,10 +485,10 @@ export default {
       selectedIds.value = allSelected.value ? [] : sorted.value.map((i) => i.id);
     }
 
-    function addSelectedToList() {
+    async function addSelectedToList() {
       const list = selectedItems.value;
       if (!list.length) return;
-      addToList(list);
+      await addToList(list);
       clearSelection();
     }
 

@@ -334,8 +334,8 @@
       <div class="valu-dialog" @click.stop>
         <p class="valu-dialog-message">{{ dialogMessage }}</p>
         <div class="valu-dialog-actions">
-          <button v-if="dialogIsConfirm" class="btn btn-text" @click="dialogCancel">Cancel</button>
-          <button class="btn btn-primary btn-sm" @click="dialogOk">{{ dialogIsConfirm ? 'Confirm' : 'OK' }}</button>
+          <button v-if="dialogIsConfirm" class="btn btn-text" @click="dialogCancel">{{ dialogCancelLabel }}</button>
+          <button class="btn btn-primary btn-sm" @click="dialogOk">{{ dialogIsConfirm ? dialogConfirmLabel : 'OK' }}</button>
         </div>
       </div>
     </div>

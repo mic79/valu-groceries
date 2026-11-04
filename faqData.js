@@ -50,7 +50,7 @@ export const FAQ_ENTRIES = [
     question: 'How do I quickly repeat an earlier shop?',
     answer:
       'Tap the **list-with-plus icon** above the list ("Add from a previous trip"). It shows your earlier shopping days. Tick a whole day, several days, or single items, then **Add to the list**. ' +
-      'Quantities come along; items already on the list are skipped. The old price is only kept (as an estimate) when the item stays in the same store.\n\n' +
+      'Quantities come along. If something is already on the list you can still pick it: you are asked whether to add it again or cancel. The old price is only kept (as an estimate) when the item stays in the same store.\n\n' +
       'In **History**, **Select** does the same: tap items or a day heading, then **Add to list**. On the shopping page you can also select bought items and tap **Buy again**.',
   },
   {

@@ -8,7 +8,7 @@ import SheetsApi, { TABS } from './sheetsApi.js';
 import {
   localDateISO, isFutureDate, parseAmount, roundMoney, sanitizeAmountText, flipSign, formatCurrency, cleanQuantity, sanitizeQuantityText,
   capitalizeFirst, parseCurrencyRates, rowToItem, itemToRow, pendingItems, nextOrder, sumPrices, sumPaidAmounts,
-  groupCheckedByDate, reorderList, buildSuggestions, copyForList, listKey, onListKeys, moveToStore,
+  groupCheckedByDate, reorderList, buildSuggestions, copyForList, partitionForList, moveToStore,
 } from './groceryLogic.js';
 import { getRate } from './fxService.js';
 import { formatDateLabel } from './dateLabels.js';
@@ -437,16 +437,25 @@ export default {
         .finally(() => { quickBusy = false; });
     }
 
-    /** Put copies of earlier purchases on the list; anything already there is skipped. */
-    function addCopies(specs) {
-      const keys = onListKeys(items.value);
+    /** Put copies of earlier purchases on the list; ask before adding a title that is already there. */
+    async function addCopies(specs) {
+      const { fresh: newOnes, dupes } = partitionForList(specs, items.value);
+      let toAdd = newOnes;
+      if (dupes.length) {
+        const one = dupes.length === 1;
+        const title = one ? '"' + dupes[0].title + '"' : dupes.length + ' items';
+        const msg = newOnes.length
+          ? (one ? title + ' is' : title + ' are') + ' already on your list. Add '
+            + (one ? 'it' : 'them') + ' again anyway? The other '
+            + newOnes.length + (newOnes.length === 1 ? ' item' : ' items') + ' will be added either way.'
+          : (one ? title + ' is' : title + ' are') + ' already on your list. Add '
+            + (one ? 'it' : 'them') + ' again anyway?';
+        if (await showConfirm(msg, { confirmLabel: 'Add anyway' })) toAdd = [...newOnes, ...dupes];
+        else if (!newOnes.length) return [];
+      }
       const nextBy = {};
       const fresh = [];
-      let skipped = 0;
-      for (const s of specs) {
-        const k = listKey(s);
-        if (keys.has(k)) { skipped++; continue; }
-        keys.add(k);
+      for (const s of toAdd) {
         if (nextBy[s.storeId] === undefined) nextBy[s.storeId] = nextOrder(items.value, s.storeId);
         fresh.push(buildNewItem({ ...s, price: trackPrices.value ? s.price : null, order: nextBy[s.storeId]++, checkedDate: '' }));
       }
@@ -457,16 +466,14 @@ export default {
           items.value = items.value.filter((i) => !ids.has(i.id));
           showAlert('Could not add the items. Check your connection and try again.');
         });
+        say(`Added ${fresh.length} ${fresh.length === 1 ? 'item' : 'items'} to the list`);
       }
-      say(fresh.length
-        ? `Added ${fresh.length} ${fresh.length === 1 ? 'item' : 'items'} to the list` + (skipped ? ` · ${skipped} already there` : '')
-        : 'Everything was already on the list');
       return fresh;
     }
 
-    function onTripAdd(specs) {
+    async function onTripAdd(specs) {
       showTripSheet.value = false;
-      const fresh = addCopies(specs);
+      const fresh = await addCopies(specs);
       // Show where they landed when that is another store's list.
       const first = fresh[0];
       if (first && !fresh.some((f) => f.storeId === currentStoreId.value)) selectTab(first.storeId);
@@ -617,10 +624,10 @@ export default {
     const hasPendingSelected = computed(() => selectedItems.value.some((i) => !i.checkedDate));
 
     /** Buy again: copies of the selected (already bought) items go on the list as new items. */
-    function addAgain() {
+    async function addAgain() {
       const list = selectedItems.value.filter((i) => i.checkedDate);
       if (!list.length) return;
-      addCopies(list.map((i) => copyForList(i, { storeId: (storeById.value.has(i.storeId) ? i.storeId : ''), keepPrice: true })));
+      await addCopies(list.map((i) => copyForList(i, { storeId: (storeById.value.has(i.storeId) ? i.storeId : ''), keepPrice: true })));
       clearSelection();
     }
 

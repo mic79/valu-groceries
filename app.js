@@ -116,20 +116,26 @@ const app = createApp({
     const dialogVisible = ref(false);
     const dialogMessage = ref('');
     const dialogIsConfirm = ref(false);
+    const dialogConfirmLabel = ref('Confirm');
+    const dialogCancelLabel = ref('Cancel');
     let dialogResolve = null;
 
     function showAlert(message) {
       return new Promise((resolve) => {
         dialogMessage.value = message;
         dialogIsConfirm.value = false;
+        dialogConfirmLabel.value = 'OK';
+        dialogCancelLabel.value = 'Cancel';
         dialogResolve = resolve;
         dialogVisible.value = true;
       });
     }
-    function showConfirm(message) {
+    function showConfirm(message, opts = {}) {
       return new Promise((resolve) => {
         dialogMessage.value = message;
         dialogIsConfirm.value = true;
+        dialogConfirmLabel.value = opts.confirmLabel || 'Confirm';
+        dialogCancelLabel.value = opts.cancelLabel || 'Cancel';
         dialogResolve = resolve;
         dialogVisible.value = true;
       });
@@ -667,7 +673,7 @@ const app = createApp({
       startQuickLookDemo, leaveDemoToSignIn,
       switchGroup, onGroupCreated, onSharedOpened,
       onStoresUpdated, onSettingsUpdated, refreshCurrentPage, refreshGroupsList,
-      dialogVisible, dialogMessage, dialogIsConfirm, dialogOk, dialogCancel,
+      dialogVisible, dialogMessage, dialogIsConfirm, dialogConfirmLabel, dialogCancelLabel, dialogOk, dialogCancel,
     };
   },
 });
