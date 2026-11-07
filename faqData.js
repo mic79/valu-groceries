@@ -77,7 +77,8 @@ export const FAQ_ENTRIES = [
     answer:
       'Prices are always stored in your group\'s **base currency**, so totals add up. When you buy in another currency, enter the price in that currency and Valu converts it using the exchange rate of the purchase date.\n\n' +
       'In the item form, "Paid in" picks the currency; tap **Convert from ...**, type the price, and the converted amount is filled in. The original amount is kept with the item, so the list shows what you paid (for example 3.50 EUR) with the converted amount underneath.\n\nWhen you mark a single item as bought, a small box offers to type the price right away, in the store\'s currency.\n\n' +
-      'If a store always uses another currency (say a shop in Paris), set that currency on the store and the conversion starts automatically. The list total then shows both the amount in your base currency and the total in the store\'s currency. When you add something from History or a previous trip again, the foreign amount is kept and the base-currency estimate is refreshed with today\'s exchange rate. If the rate service is unreachable, the fallback rates from the group settings are used.',
+      'If a store always uses another currency (say a shop in Paris), set that currency on the store and the conversion starts automatically. The list total then shows both the amount in your base currency and the total in the store\'s currency.\n\n' +
+      'When you add something from History or a previous trip again, the foreign amount is kept and the list shows a base-currency estimate using today\'s rate. The lasting conversion for spending uses the **bought date**: tick off today, or set a historic date under Date, and the rate of that day is applied. If the rate service is unreachable, the fallback rates from the group settings are used.',
   },
   {
     id: 'share',

@@ -21,7 +21,7 @@ import {
 import { formatDayHeading, formatMonthLabel, formatDateLabel } from './dateLabels.js';
 import { rowToNutrition, readLookup, nutritionMeasure } from './nutritionLogic.js';
 import { groupNutritionOn } from './nutritionFlags.js';
-import { refreshForeignListPrices } from './fxService.js';
+import { refreshForeignListPrices, applyForeignPricesForDate } from './fxService.js';
 
 const { ref, reactive, computed, watch, inject, onMounted } = Vue;
 
@@ -503,12 +503,15 @@ export default {
 
     function openDateSheet() { bulkDate.value = today(); sheets.date = true; }
     /** Sets the bought date of the selection ('' puts everything back on the shopping list). */
-    function applyBulkDate(date) {
+    async function applyBulkDate(date) {
       if (date && isFutureDate(date)) { showAlert('The bought date cannot be in the future.'); return; }
       const list = selectedItems.value;
       if (!list.length) return;
       sheets.date = false;
-      const before = list.map((i) => ({ i, checkedDate: i.checkedDate, order: i.order }));
+      const before = list.map((i) => ({
+        i, checkedDate: i.checkedDate, order: i.order,
+        price: i.price, paidAmount: i.paidAmount, paidCurrency: i.paidCurrency,
+      }));
       const others = items.value.filter((i) => !list.includes(i));
       const nextBy = {};
       list.forEach((i) => {
@@ -517,8 +520,21 @@ export default {
         if (nextBy[i.storeId] === undefined) nextBy[i.storeId] = nextOrder(others, i.storeId);
         i.order = nextBy[i.storeId]++;
       });
+      // Changing the purchase date: foreign amounts use that day's rate for the spending record.
+      if (date && trackPrices.value) {
+        await applyForeignPricesForDate(list, {
+          baseCurrency: baseCurrency.value,
+          date,
+          manualRates: parseCurrencyRates(props.settings?.currencyRates),
+        });
+      }
       enqueue(() => SheetsApi.batchUpdateRows(props.sheetId, TABS.ITEMS, list.map((i) => ({ id: i.id, values: itemToRow(i) })))).catch(() => {
-        before.forEach((b) => { b.i.checkedDate = b.checkedDate; b.i.order = b.order; });
+        before.forEach((b) => {
+          Object.assign(b.i, {
+            checkedDate: b.checkedDate, order: b.order,
+            price: b.price, paidAmount: b.paidAmount, paidCurrency: b.paidCurrency,
+          });
+        });
         showAlert('Could not save that change. Check your connection and try again.');
       });
       if (!date) say(list.length + (list.length === 1 ? ' item is' : ' items are') + ' back on your list');

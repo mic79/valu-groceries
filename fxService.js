@@ -144,3 +144,24 @@ export async function refreshForeignListPrices(specs, { baseCurrency, date, manu
     };
   });
 }
+
+/**
+ * Same as refreshForeignListPrices, but writes the new base price onto the given item objects
+ * (used when a bought date is set or changed — that date's rate is what the spending record needs).
+ * @returns {Promise<boolean>} true if any item's price was updated
+ */
+export async function applyForeignPricesForDate(items, opts) {
+  if (!items?.length) return false;
+  const refreshed = await refreshForeignListPrices(items, opts);
+  let changed = false;
+  for (let i = 0; i < items.length; i++) {
+    const next = refreshed[i];
+    if (!next || next === items[i]) continue;
+    if (items[i].price === next.price && items[i].paidAmount === next.paidAmount && items[i].paidCurrency === next.paidCurrency) continue;
+    items[i].price = next.price;
+    items[i].paidAmount = next.paidAmount;
+    items[i].paidCurrency = next.paidCurrency;
+    changed = true;
+  }
+  return changed;
+}

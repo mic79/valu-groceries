@@ -10,7 +10,7 @@ import {
   capitalizeFirst, parseCurrencyRates, rowToItem, itemToRow, pendingItems, nextOrder, sumPrices, sumPaidAmounts,
   groupCheckedByDate, reorderList, buildSuggestions, copyForList, partitionForList, moveToStore,
 } from './groceryLogic.js';
-import { getRate, refreshForeignListPrices } from './fxService.js';
+import { getRate, refreshForeignListPrices, applyForeignPricesForDate } from './fxService.js';
 import { formatDateLabel } from './dateLabels.js';
 import { STORAGE_PREFIX } from './config.js';
 import TripSheet from './TripSheet.js';
@@ -549,15 +549,23 @@ export default {
     function toggleChecked(item) {
       if (leaving[item.id]) return;
       const wasDone = !!item.checkedDate;
-      const before = { checkedDate: item.checkedDate, order: item.order };
+      const before = { checkedDate: item.checkedDate, order: item.order, price: item.price, paidAmount: item.paidAmount, paidCurrency: item.paidCurrency };
       leaving[item.id] = true;
-      setTimeout(() => {
+      setTimeout(async () => {
         delete leaving[item.id];
         if (wasDone) {
           item.checkedDate = '';
           item.order = nextOrder(items.value.filter((i) => i.id !== item.id), item.storeId);
         } else {
           item.checkedDate = today();
+          // Finalize FX on the purchase date (today when ticking off).
+          if (trackPrices.value) {
+            await applyForeignPricesForDate([item], {
+              baseCurrency: baseCurrency.value,
+              date: item.checkedDate,
+              manualRates: manualRates.value,
+            });
+          }
         }
         persistItem(item, () => Object.assign(item, before));
         if (wasDone && snack.itemId === item.id) hideSnack();
@@ -662,12 +670,15 @@ export default {
     }
 
     /** Set the bought date of the selection ('' puts everything back on the list). */
-    function applyBulkDate(date) {
+    async function applyBulkDate(date) {
       if (date && isFutureDate(date)) { showAlert('The bought date cannot be in the future.'); return; }
       const list = selectedItems.value;
       if (!list.length) return;
       showDateSheet.value = false;
-      const before = list.map((i) => ({ i, checkedDate: i.checkedDate, order: i.order }));
+      const before = list.map((i) => ({
+        i, checkedDate: i.checkedDate, order: i.order,
+        price: i.price, paidAmount: i.paidAmount, paidCurrency: i.paidCurrency,
+      }));
       const others = items.value.filter((i) => !list.includes(i));
       const nextBy = {};
       list.forEach((i) => {
@@ -677,14 +688,27 @@ export default {
         if (nextBy[i.storeId] === undefined) nextBy[i.storeId] = nextOrder(others, i.storeId);
         i.order = nextBy[i.storeId]++;
       });
+      // Historic (or any) bought date: convert foreign amounts with that day's rate.
+      if (date && trackPrices.value) {
+        await applyForeignPricesForDate(list, {
+          baseCurrency: baseCurrency.value,
+          date,
+          manualRates: manualRates.value,
+        });
+      }
       enqueue(() => SheetsApi.batchUpdateRows(props.sheetId, TABS.ITEMS, list.map((i) => ({ id: i.id, values: itemToRow(i) })))).catch(() => {
-        before.forEach((b) => { b.i.checkedDate = b.checkedDate; b.i.order = b.order; });
+        before.forEach((b) => {
+          Object.assign(b.i, {
+            checkedDate: b.checkedDate, order: b.order,
+            price: b.price, paidAmount: b.paidAmount, paidCurrency: b.paidCurrency,
+          });
+        });
         showAlert('Could not save that change. Check your connection and try again.');
       });
       clearSelection();
     }
 
-    function checkOffSelected() {
+    async function checkOffSelected() {
       const list = selectedItems.value.filter((i) => !i.checkedDate);
       if (!list.length) return;
       if (list.length === 1) { // one item: same path as before, so the price box can offer itself
@@ -692,10 +716,26 @@ export default {
         toggleChecked(list[0]);
         return;
       }
-      const before = list.map((i) => ({ i, checkedDate: i.checkedDate }));
-      list.forEach((i) => { i.checkedDate = today(); });
+      const before = list.map((i) => ({
+        i, checkedDate: i.checkedDate,
+        price: i.price, paidAmount: i.paidAmount, paidCurrency: i.paidCurrency,
+      }));
+      const bought = today();
+      list.forEach((i) => { i.checkedDate = bought; });
+      if (trackPrices.value) {
+        await applyForeignPricesForDate(list, {
+          baseCurrency: baseCurrency.value,
+          date: bought,
+          manualRates: manualRates.value,
+        });
+      }
       enqueue(() => SheetsApi.batchUpdateRows(props.sheetId, TABS.ITEMS, list.map((i) => ({ id: i.id, values: itemToRow(i) })))).catch(() => {
-        before.forEach((b) => { b.i.checkedDate = b.checkedDate; });
+        before.forEach((b) => {
+          Object.assign(b.i, {
+            checkedDate: b.checkedDate,
+            price: b.price, paidAmount: b.paidAmount, paidCurrency: b.paidCurrency,
+          });
+        });
         showAlert('Could not save that change. Check your connection and try again.');
       });
       clearSelection();

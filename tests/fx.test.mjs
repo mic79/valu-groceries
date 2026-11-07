@@ -56,3 +56,24 @@ test('refreshForeignListPrices keeps the old base price when the rate is missing
     globalThis.fetch = originalFetch;
   }
 });
+
+test('applyForeignPricesForDate mutates items using the given purchase date', async () => {
+  const { applyForeignPricesForDate } = await import('../fxService.js');
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ rate: 2, date: '2026-10-01' }),
+  });
+  try {
+    const item = { title: 'Wine', price: 7, paidAmount: 5, paidCurrency: 'EUR' };
+    const changed = await applyForeignPricesForDate([item], {
+      baseCurrency: 'USD',
+      date: '2026-10-01',
+    });
+    assert.equal(changed, true);
+    assert.equal(item.price, 10); // 5 * 2
+    assert.equal(item.paidAmount, 5);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
