@@ -10,7 +10,7 @@ import {
   capitalizeFirst, parseCurrencyRates, rowToItem, itemToRow, pendingItems, nextOrder, sumPrices, sumPaidAmounts,
   groupCheckedByDate, reorderList, buildSuggestions, copyForList, partitionForList, moveToStore,
 } from './groceryLogic.js';
-import { getRate } from './fxService.js';
+import { getRate, refreshForeignListPrices } from './fxService.js';
 import { formatDateLabel } from './dateLabels.js';
 import { STORAGE_PREFIX } from './config.js';
 import TripSheet from './TripSheet.js';
@@ -429,12 +429,29 @@ export default {
         scrollRowIntoView(item.id);
         quickInput.value?.focus();
       };
-      if (typedPrice === '' || isZeroPrice(typedPrice)) { finish(null); return; }
-      quickBusy = true;
-      resolvePrice(typedPrice, storeCurrencyFor(fields.storeId ?? currentStoreId.value), today())
-        .then(finish)
-        .catch((e) => showAlert(e.message))
-        .finally(() => { quickBusy = false; });
+      if (typedPrice !== '' && !isZeroPrice(typedPrice)) {
+        quickBusy = true;
+        resolvePrice(typedPrice, storeCurrencyFor(fields.storeId ?? currentStoreId.value), today())
+          .then(finish)
+          .catch((e) => showAlert(e.message))
+          .finally(() => { quickBusy = false; });
+        return;
+      }
+      // Suggested foreign prices still reflect the old purchase date — refresh for today.
+      if (fields.paidAmount && fields.paidCurrency && fields.paidCurrency !== baseCurrency.value) {
+        quickBusy = true;
+        refreshForeignListPrices([fields], {
+          baseCurrency: baseCurrency.value,
+          date: today(),
+          manualRates: manualRates.value,
+        }).then(([updated]) => finish({
+          price: updated.price,
+          paidAmount: updated.paidAmount,
+          paidCurrency: updated.paidCurrency,
+        })).finally(() => { quickBusy = false; });
+        return;
+      }
+      finish(null);
     }
 
     /** Put copies of earlier purchases on the list; ask before adding a title that is already there. */
@@ -452,6 +469,14 @@ export default {
             + (one ? 'it' : 'them') + ' again anyway?';
         if (await showConfirm(msg, { confirmLabel: 'Add anyway' })) toAdd = [...newOnes, ...dupes];
         else if (!newOnes.length) return [];
+      }
+      // Foreign paid amounts were converted on the old purchase date; refresh for today.
+      if (trackPrices.value) {
+        toAdd = await refreshForeignListPrices(toAdd, {
+          baseCurrency: baseCurrency.value,
+          date: today(),
+          manualRates: manualRates.value,
+        });
       }
       const nextBy = {};
       const fresh = [];
@@ -837,11 +862,19 @@ export default {
       persistItem(item, () => Object.assign(item, before));
     }
 
-    function duplicateFromSheet(id) {
+    async function duplicateFromSheet(id) {
       const src = items.value.find((i) => i.id === id);
       if (!src) return;
+      let spec = copyForList(src, { keepPrice: true });
+      if (trackPrices.value) {
+        [spec] = await refreshForeignListPrices([spec], {
+          baseCurrency: baseCurrency.value,
+          date: today(),
+          manualRates: manualRates.value,
+        });
+      }
       const copy = buildNewItem({
-        ...copyForList(src, { keepPrice: true }),
+        ...spec,
         order: nextOrder(items.value, src.storeId),
       });
       closeSheet();

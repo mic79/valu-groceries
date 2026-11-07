@@ -517,6 +517,8 @@ export function buildTrips(items, { storeId = '*', query = '' } = {}) {
 /**
  * What to put on the list when buying something again. The old price is only kept (as an estimate)
  * when it stays in the same store, because another store may charge in another currency.
+ * Callers that keep a foreign paidAmount should re-convert the base price for today's rate
+ * (see refreshForeignListPrices) — the copied price still reflects the old purchase date.
  */
 export function copyForList(src, { storeId = src.storeId || '', keepPrice = true } = {}) {
   const sameStore = (src.storeId || '') === (storeId || '');

@@ -16,11 +16,12 @@ import { STORAGE_PREFIX } from './config.js';
 import { copyText } from './clipboard.js';
 import {
   formatCurrency, rowToItem, itemToRow, nextOrder, sumPrices, monthKey, localDateISO, isFutureDate, copyForList, partitionForList,
-  periodRange, inRange, sortPurchases, productStats, COPY_FIELDS, itemsToText, moveToStore,
+  periodRange, inRange, sortPurchases, productStats, COPY_FIELDS, itemsToText, moveToStore, parseCurrencyRates,
 } from './groceryLogic.js';
 import { formatDayHeading, formatMonthLabel, formatDateLabel } from './dateLabels.js';
 import { rowToNutrition, readLookup, nutritionMeasure } from './nutritionLogic.js';
 import { groupNutritionOn } from './nutritionFlags.js';
+import { refreshForeignListPrices } from './fxService.js';
 
 const { ref, reactive, computed, watch, inject, onMounted } = Vue;
 
@@ -419,6 +420,14 @@ export default {
             + (one ? 'it' : 'them') + ' again anyway?';
         if (await showConfirm(msg, { confirmLabel: 'Add anyway' })) toAdd = [...newOnes, ...dupes];
         else if (!newOnes.length) return;
+      }
+      // Foreign paid amounts were converted on the old purchase date; refresh for today.
+      if (trackPrices.value) {
+        toAdd = await refreshForeignListPrices(toAdd, {
+          baseCurrency: baseCurrency.value,
+          date: today(),
+          manualRates: parseCurrencyRates(props.settings?.currencyRates),
+        });
       }
       const nextBy = {};
       const fresh = [];

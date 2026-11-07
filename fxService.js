@@ -97,3 +97,50 @@ export async function getRate(from, to, date) {
     return { error: `Rate unavailable: ${err.message}` };
   }
 }
+
+function roundMoney(n) {
+  return Math.round(Number(n) * 100) / 100;
+}
+
+/**
+ * Re-convert list estimates that still carry a foreign paid amount, using the rate for `date`
+ * (typically today, when putting something back on the list to buy again). Specs without a
+ * foreign paid amount are left alone. If a rate cannot be fetched, the previous base price is kept.
+ *
+ * @param {Array<{price?: number|null, paidAmount?: number|null, paidCurrency?: string}>} specs
+ * @param {{ baseCurrency: string, date: string, manualRates?: Array<{currency: string, rate: string|number}> }} opts
+ * @returns {Promise<typeof specs>}
+ */
+export async function refreshForeignListPrices(specs, { baseCurrency, date, manualRates = [] }) {
+  const base = String(baseCurrency || '').toUpperCase();
+  const need = specs.filter((s) => (
+    typeof s.paidAmount === 'number'
+    && s.paidCurrency
+    && String(s.paidCurrency).toUpperCase() !== base
+  ));
+  if (!need.length) return specs;
+
+  const rates = {};
+  for (const cur of new Set(need.map((s) => String(s.paidCurrency).toUpperCase()))) {
+    const res = await getRate(cur, base, date);
+    let rate = res && !res.error ? res.rate : null;
+    if (rate == null) {
+      const manual = parseFloat(manualRates.find((r) => String(r.currency).toUpperCase() === cur)?.rate);
+      if (Number.isFinite(manual)) rate = manual;
+    }
+    rates[cur] = rate;
+  }
+
+  return specs.map((s) => {
+    const cur = String(s.paidCurrency || '').toUpperCase();
+    if (typeof s.paidAmount !== 'number' || !cur || cur === base) return s;
+    const rate = rates[cur];
+    if (rate == null) return s;
+    return {
+      ...s,
+      price: roundMoney(s.paidAmount * rate),
+      paidAmount: roundMoney(s.paidAmount),
+      paidCurrency: cur,
+    };
+  });
+}
