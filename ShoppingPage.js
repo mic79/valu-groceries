@@ -156,7 +156,7 @@ const GlItem = {
               title="Store, notes and more" @click.stop="$emit('open', item)">
         <span class="material-icons">more_horiz</span>
       </button>
-      <span v-if="reorder && !done" class="gl-drag-handle" aria-label="Drag to reorder"
+      <span v-if="reorder" class="gl-drag-handle" aria-label="Drag to reorder"
             @pointerdown.prevent="$emit('drag', $event, item)" @click.stop>
         <span class="material-icons">drag_handle</span>
       </span>
@@ -775,22 +775,41 @@ export default {
     }
 
     // ── Reorder (drag) ────────────────────────────────────────────────────────
+    // Works on the open list, and within a single bought day (not across days).
     let dragState = null;
+
+    const canReorder = computed(() => (
+      pending.value.length >= 2 || doneGroups.value.some((g) => g.items.length >= 2)
+    ));
 
     function toggleReorder() {
       reorderMode.value = !reorderMode.value;
       selectedIds.value = [];
+      // Open bought days that have enough items to rearrange.
+      if (reorderMode.value) {
+        doneGroups.value.forEach((g) => {
+          if (g.items.length >= 2) openDone[g.date] = true;
+        });
+      }
     }
 
     function startDrag(e, item) {
       if (dragState) return;
-      const list = pending.value;
+      let list;
+      let rows;
+      if (item.checkedDate) {
+        list = doneGroups.value.find((g) => g.date === item.checkedDate)?.items || [];
+        const groupEl = listEl.value?.querySelector(`[data-done-group="${item.checkedDate}"]`);
+        rows = [...(groupEl?.querySelectorAll('[data-done-row] [data-row-id]') || [])];
+      } else {
+        list = pending.value;
+        rows = [...(listEl.value?.querySelectorAll('[data-pending-row] [data-row-id]') || [])];
+      }
       const index = list.findIndex((i) => i.id === item.id);
-      const rows = [...(listEl.value?.querySelectorAll('[data-pending-row] [data-row-id]') || [])];
       if (index < 0 || rows.length !== list.length) return;
       const scroller = rows[index].closest('.main-content');
       dragState = {
-        index, rows, target: index, scroller,
+        index, list, rows, target: index, scroller,
         h: rows[index].offsetHeight + 8,
         startY: e.clientY, lastY: e.clientY,
         startScroll: scroller ? scroller.scrollTop : 0,
@@ -846,12 +865,11 @@ export default {
 
     function endDrag() {
       const d = finishDrag();
-      if (d.target !== d.index) commitReorder(d.index, d.target);
+      if (d.target !== d.index) commitReorder(d.list, d.index, d.target);
     }
     function cancelDrag() { finishDrag(); }
 
-    function commitReorder(from, to) {
-      const list = pending.value;
+    function commitReorder(list, from, to) {
       const changes = reorderList(list, from, to);
       if (!changes.length) return;
       const before = changes.map((c) => ({ item: items.value.find((i) => i.id === c.id), order: items.value.find((i) => i.id === c.id)?.order }));
@@ -949,7 +967,7 @@ export default {
       pending, doneGroups, estimate, estimateForeign, foreignStoreCurrency, hasAnyPrice, isDoneOpen, toggleDone, formatDateLabel,
       storeNameOf, newTitle, inputFocused, quickInput, suggestions, quickAdd, listEl, leaving,
       toggleChecked, onRowOpen, onInlineSave, startDrag,
-      reorderMode, toggleReorder, hasSelection, clearSelection, toggleSelect, allPendingSelected, somePendingSelected,
+      reorderMode, toggleReorder, canReorder, hasSelection, clearSelection, toggleSelect, allPendingSelected, somePendingSelected,
       selectedIds, selectedItems, selectedTotal, selectedForeignTotal, paidTotalLabel, selectAll,
       checkOffSelected, deleteSelected, moveSelectedTo, showMoveSheet,
       toggleGroupSelect, groupSelected, hasDoneSelected, hasPendingSelected, addAgain,
@@ -1019,7 +1037,7 @@ export default {
           </div>
           <div class="gl-summary-actions">
             <button class="gl-icon-btn" aria-label="Add from a previous trip" title="Add from a previous trip" @click="showTripSheet = true"><span class="material-icons">playlist_add</span></button>
-            <button class="gl-icon-btn" :class="{ active: reorderMode }" aria-label="Reorder items" @click="toggleReorder" :disabled="pending.length < 2"><span class="material-icons">swap_vert</span></button>
+            <button class="gl-icon-btn" :class="{ active: reorderMode }" aria-label="Reorder items" @click="toggleReorder" :disabled="!canReorder"><span class="material-icons">swap_vert</span></button>
             <button class="gl-icon-btn" aria-label="Refresh" @click="fetchItems(true)"><span class="material-icons">refresh</span></button>
           </div>
         </div>
@@ -1047,11 +1065,12 @@ export default {
             <p>Everything on this list has been bought.</p>
           </div>
 
-          <div class="gl-list" v-for="g in doneGroups" :key="g.date">
+          <div class="gl-list" v-for="g in doneGroups" :key="g.date" :data-done-group="g.date">
             <button class="gl-done-head" :class="{ open: isDoneOpen(g.date) }" @click="toggleDone(g.date)">
               <span class="gl-check gl-check--square" :class="{ checked: groupSelected(g) }" role="checkbox" tabindex="0"
                     :aria-checked="groupSelected(g)" :aria-label="'Select everything from ' + formatDateLabel(g.date)"
-                    @click.stop="toggleGroupSelect(g)" @keydown.enter.stop.prevent="toggleGroupSelect(g)" @keydown.space.stop.prevent="toggleGroupSelect(g)">
+                    :aria-disabled="reorderMode ? 'true' : 'false'"
+                    @click.stop="!reorderMode && toggleGroupSelect(g)" @keydown.enter.stop.prevent="!reorderMode && toggleGroupSelect(g)" @keydown.space.stop.prevent="!reorderMode && toggleGroupSelect(g)">
                 <span class="gl-check-circle"><span class="material-icons">check</span></span>
               </span>
               <span>{{ formatDateLabel(g.date) }}</span>
@@ -1059,11 +1078,13 @@ export default {
               <span class="material-icons" :style="trackPrices && g.total !== 0 ? '' : 'margin-left:auto'">expand_more</span>
             </button>
             <template v-if="isDoneOpen(g.date)">
-              <gl-item v-for="item in g.items" :key="item.id" :item="item" :done="true" :selected="selectedIds.includes(item.id)"
-                       :reorder="false" :interactive="!hasSelection"
-                       :show-price="trackPrices" :currency="baseCurrency" :store-currency="storeCurrencyFor(item.storeId)"
-                       :leaving="!!leaving[item.id]"
-                       @open="onRowOpen" @select="toggleSelect" @save="onInlineSave" />
+              <div v-for="item in g.items" :key="item.id" data-done-row>
+                <gl-item :item="item" :done="true" :selected="selectedIds.includes(item.id)"
+                         :reorder="reorderMode" :interactive="!reorderMode && !hasSelection"
+                         :show-price="trackPrices" :currency="baseCurrency" :store-currency="storeCurrencyFor(item.storeId)"
+                         :leaving="!!leaving[item.id]"
+                         @open="onRowOpen" @select="toggleSelect" @drag="startDrag" @save="onInlineSave" />
+              </div>
             </template>
           </div>
         </div>
@@ -1083,7 +1104,7 @@ export default {
           </div>
         </div>
         <div v-else-if="reorderMode" class="gl-select-bar">
-          <span class="gl-select-count">Drag the handles to reorder</span>
+          <span class="gl-select-count">Drag the handles to reorder · bought items stay in their day</span>
           <button class="btn btn-text" @click="toggleReorder">Done</button>
         </div>
         <div v-else class="gl-quick">

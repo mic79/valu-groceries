@@ -42,7 +42,7 @@ export const FAQ_ENTRIES = [
     question: 'Can I reorder, move or delete several items at once?',
     answer:
       'Yes. Select items with the squares in front of them (or the square above the list for all of them). The bar that appears lets you mark them as bought, set a date, move them to another store or delete them. ' +
-      'The arrows icon turns on reordering: drag the handle at the right of an item to put it where you want it.',
+      'The arrows icon turns on reordering: drag the handle at the right of an item to put it where you want it. That works for items still to buy, and within a bought day (not across different days).',
   },
   {
     id: 'reuse',
